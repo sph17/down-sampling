@@ -10,10 +10,13 @@ ord=$1
 frd=$2
 count=$3
 
-numerator=$(bc <<< "$frd*$count")
+numerator=$(echo $frd $count| awk ' { printf "%0.2f\n", ($1 * $2); } ')
+
+#$(bc <<< "$frd*$count")
 #numerator=$(($count * $frd))
 #echo $numerator
+#readsToSample=$(bc <<< "$numerator / $ord")
 
-readsToSample=$(bc <<< "$numerator / $ord")
+readsToSample=$(echo $numerator $ord| awk ' { printf "%0.2f\n", ($1 / $2); } ')
 
 echo $readsToSample
