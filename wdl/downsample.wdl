@@ -10,6 +10,8 @@ workflow downSampling {
         
         File bam_or_cram_file
         File reference_fasta
+        Float start_depth
+        Float final_depth
         
         # Docker
         String downsample_docker
@@ -18,7 +20,7 @@ workflow downSampling {
     }
 
     parameter_meta {
-      cram_file: ".bam or .cram file to search for SVs. bams are preferable, crams will be converted to bams."
+      bam_or_cram_file: ".bam or .cram file to downsample from. bams are preferable, crams will be converted to bams."
       reference_fasta: ".fasta file with reference used to align bam or cram file"
     }
 
@@ -48,7 +50,7 @@ workflow downSampling {
     #################################################################################
     call bamToFq { 
         input :
-            bam_file=bam_file,
+            bam_file = bam_file,
             downsample_docker = downsample_docker
     }
 
@@ -58,9 +60,11 @@ workflow downSampling {
     #################################################################################
     call countAndRandomSample {
         input : 
-            fastq_file_1=bamToFq.fastq_file_1,
-            fastq_file_2=bamToFq.fastq_file_2,
-            downsample_docker = downsample_docker
+            fastq_file_1 = bamToFq.fastq_file_1,
+            fastq_file_2 = bamToFq.fastq_file_2,
+            downsample_docker = downsample_docker,
+            start_depth = start_depth,
+            final_depth = final_depth
     }
 
     #################################################################################
@@ -139,12 +143,12 @@ task bamToFq {
         File fastq_file_2 = fastq_file_2_name
     }
 
-    command {
+    command <<<
         picard SamToFastq \
                 I=~{bam_file} \
                 FASTQ=~{fastq_file_1_name} \
                 SECOND_END_FASTQ=~{fastq_file_2_name}
-    }
+    >>>
 
     runtime {
         docker: downsample_docker
@@ -287,13 +291,13 @@ task countCoverage {
         File wgsCoverage = wgsCoverage_name
     }
 
-    command {
+    command <<<
         picard CollectWgsMetrics \
         I=${downsample_sorted_cram} \
         O=${wgsCoverage} \
         R=${reference_fasta} \
         COUNT_UNPAIRED=TRUE
-    }
+    >>>
 
     runtime {
         docker: downsample_docker
