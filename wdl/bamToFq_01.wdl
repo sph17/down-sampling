@@ -1,3 +1,5 @@
+version 1.0
+
 workflow bamToFq {
 
     #################################################################################
@@ -10,7 +12,7 @@ workflow bamToFq {
         File reference_fasta
         # Docker
         String downsample_docker
-        
+
     }
 
     parameter_meta {
