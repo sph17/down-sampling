@@ -1,6 +1,6 @@
 version 1.0
 
-workflow downSampling {
+workflow sortIndex {
 
     #################################################################################
     ####        Required basic arguments                                            #
