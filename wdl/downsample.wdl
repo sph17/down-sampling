@@ -116,12 +116,12 @@ task cramToBam {
         File bam_file = bam_file_name
     }
 
-    command {
+    command <<<
         samtools view \
                 -b \
                 -o ~{bam_file_name} \
                 ~{cram_file}
-    }
+    >>>
 
     runtime {
         docker: downsample_docker
