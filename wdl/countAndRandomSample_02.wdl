@@ -13,6 +13,7 @@ workflow countAndRandomSample {
         File fastq_file_2
         Float start_depth
         Float final_depth
+        Int? seed_number = $RANDOM
         
         # Docker
         String downsample_docker
@@ -39,7 +40,8 @@ workflow countAndRandomSample {
             fastq_file_2 = fastq_file_2,
             downsample_docker = downsample_docker,
             start_depth = start_depth,
-            final_depth = final_depth
+            final_depth = final_depth,
+            seed = seed_number 
     }
 
 }
@@ -52,10 +54,12 @@ task countAndRandomSample {
         Float start_depth
         Float final_depth
         String downsample_docker
+        Int seed
     }
 
     String fastq_downsample_1_name = basename(fastq_file_1, ".fastq") + "_downsample.fastq"
     String fastq_downsample_2_name = basename(fastq_file_2, ".fastq") + "_downsample.fastq"
+
 
     output {
         File downsample_file_1 = fastq_downsample_1_name
@@ -79,7 +83,7 @@ task countAndRandomSample {
 
             echo "freads: " $freads
 
-            seed=$RANDOM
+            #seed=$RANDOM
             echo "seed: " $seed
 
             fastq-sample -n ${freads} --seed ${seed} -o ${downsample_file_1} ${fastq_file_1}

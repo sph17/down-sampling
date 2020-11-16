@@ -12,6 +12,8 @@ workflow bamToFq {
         File reference_fasta
         # Docker
         String downsample_docker
+        Int bam_to_fq_disk_size
+        String bam_to_fq_mem_size
 
     }
 
@@ -32,7 +34,9 @@ workflow bamToFq {
     call bamToFq { 
         input :
             bam_file = bam_file,
-            downsample_docker = downsample_docker
+            downsample_docker = downsample_docker,
+            disk_size = bam_to_fq_disk_size,
+            mem_size = bam_to_fq_mem_size
     }
 
 }
@@ -43,6 +47,8 @@ task bamToFq {
     input {
         File bam_file
         String downsample_docker
+        Int disk_size
+        String mem_size
     }
 
     String fastq_file_1_name = basename(bam_file, ".bam") + "_1.fastq"
@@ -62,5 +68,8 @@ task bamToFq {
 
     runtime {
         docker: downsample_docker
+            memory: mem_size
+            cpu: "1"
+            disks: "local-disk " + disk_size + " HDD"
     }
 }
