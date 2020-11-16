@@ -73,8 +73,8 @@ task bamToFq {
 
     runtime {
         docker: downsample_docker
-            memory: mem_size
-            cpu: "1"
-            disks: "local-disk " + disk_size + " HDD"
+        memory: mem_size
+        cpu: "1"
+        disks: "local-disk " + disk_size + " HDD"
     }
 }
