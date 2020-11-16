@@ -10,13 +10,13 @@ workflow cramToBam {
         
         File bam_or_cram_file
         File reference_fasta
-        
+        Int cram_to_bam_disk_size
+		String cram_to_bam_mem_size
         # Docker
         String downsample_docker
 
         Boolean is_bam_ = basename(bam_or_cram_file, ".bam") + ".bam" == basename(bam_or_cram_file)
-    	Int cram_to_bam_disk_size
-		String cram_to_bam_mem_size
+    	
     }
 
     parameter_meta {
