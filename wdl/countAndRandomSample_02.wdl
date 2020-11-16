@@ -47,6 +47,11 @@ workflow countAndRandomSample {
             mem_size = sampling_mem_size
     }
 
+    output {
+        File downsample_fastq_1 = countAndRandomSample.downsample_file_1
+        File downsample_fastq_2 = countAndRandomSample.downsample_file_2
+    }
+
 }
 
 task countAndRandomSample {
