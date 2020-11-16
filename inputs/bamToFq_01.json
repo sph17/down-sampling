@@ -1,0 +1,1 @@
+{"bamToFq.bam_to_fq_mem_size":"15 GB","bamToFq.bam_to_fq_disk_size":"${200}","bamToFq.bam_file":"${this.outputBam}","bamToFq.downsample_docker":"sphao/downsample:latest","bamToFq.reference_fasta":"${workspace.reference_fasta}"}

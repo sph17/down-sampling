@@ -61,17 +61,17 @@ task realign {
 
         bwa mem -C \
                 -t ${NT} \
-                ${reference_fasta} \
-                ${downsample_file_1} \
-                ${downsample_file_2} \
+                ~{reference_fasta} \
+                ~{downsample_file_1} \
+                ~{downsample_file_2} \
                 | samtools view \
-                -bS - > ${bam_downsample_name}
+                -bS - > ~{bam_downsample_name}
 
         samtools view \
                 -C \
-                -T ${reference_fasta} \
-                ${bam_downsample_name} \
-                > ${cram_downsample_name}
+                -T ~{reference_fasta} \
+                ~{bam_downsample_name} \
+                > ~{cram_downsample_name}
     >>>
 
     runtime {
