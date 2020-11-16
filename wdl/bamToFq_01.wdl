@@ -39,6 +39,11 @@ workflow bamToFq {
             mem_size = bam_to_fq_mem_size
     }
 
+    output {
+        File fastq_1 = bamToFq.fastq_file_1
+        File fastq_2 = bamToFq.fastq_file_2
+    }
+
 }
 
 
