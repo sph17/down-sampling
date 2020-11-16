@@ -15,6 +15,8 @@ workflow cramToBam {
         String downsample_docker
 
         Boolean is_bam_ = basename(bam_or_cram_file, ".bam") + ".bam" == basename(bam_or_cram_file)
+    	Int cram_to_bam_disk_size
+		String cram_to_bam_mem_size
     }
 
     parameter_meta {
@@ -36,9 +38,15 @@ workflow cramToBam {
             input :
             cram_file = bam_or_cram_file,
             reference_fasta = reference_fasta,
-            downsample_docker = downsample_docker
+            downsample_docker = downsample_docker,
+            disk_size = cram_to_bam_disk_size,
+			mem_size = cram_to_bam_mem_size
         }
     }
+
+    output {
+    	File? outputBam = cramToBam.bam_file
+	}
 
 }
 
@@ -49,6 +57,9 @@ task cramToBam {
         File cram_file
         File reference_fasta
         String downsample_docker
+        Int disk_size
+		String mem_size
+
     }
 
     String bam_file_name = basename(cram_file, ".cram") + ".bam"
@@ -65,7 +76,10 @@ task cramToBam {
     }
 
     runtime {
-        docker: downsample_docker
-    }
+    docker: downsample_docker
+    memory: mem_size
+    cpu: "1"
+    disks: "local-disk " + disk_size + " HDD"
+	}
 }
 
