@@ -13,8 +13,7 @@ workflow countAndRandomSample {
         File fastq_file_2
         Float start_depth
         Float final_depth
-        Int? seed_override
-        Int seed_default = 20937     
+        Int? seed_override   
         # Docker
         String downsample_docker
     }
@@ -41,7 +40,7 @@ workflow countAndRandomSample {
             downsample_docker = downsample_docker,
             start_depth = start_depth,
             final_depth = final_depth,
-            seed = select_first([seed_override, seed_default]) 
+            seed = select_first([seed_override, 20937]) 
     }
 
 }
