@@ -1,1 +1,1 @@
-{"cramToBam.bam_or_cram_file":"gs://fc-95ba75a4-38aa-4939-8e26-a617fb862a03/HG00405.final.cram","cramToBam.downsample_docker":"sphao/downsample:latest","cramToBam.is_bam_":"${false}","cramToBam.reference_fasta":"${workspace.reference_fasta}"}
+{"cramToBam.cram_to_bam_disk_size":"${200}","cramToBam.reference_fasta":"${workspace.reference_fasta}","cramToBam.is_bam_":"${false}","cramToBam.downsample_docker":"sphao/downsample:latest","cramToBam.bam_or_cram_file":"gs://fc-95ba75a4-38aa-4939-8e26-a617fb862a03/HG00405.final.cram","cramToBam.cram_to_bam_mem_size":"15 GB"}
