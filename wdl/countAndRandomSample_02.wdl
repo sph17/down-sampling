@@ -16,6 +16,8 @@ workflow countAndRandomSample {
         Int? seed_override   
         # Docker
         String downsample_docker
+        Int sampling_disk_size
+        String sampling_mem_size
     }
 
     parameter_meta {
@@ -40,7 +42,9 @@ workflow countAndRandomSample {
             downsample_docker = downsample_docker,
             start_depth = start_depth,
             final_depth = final_depth,
-            seed = select_first([seed_override, 20937]) 
+            seed = select_first([seed_override, 20937]),
+            disk_size = sampling_disk_size,
+            mem_size = sampling_mem_size
     }
 
 }
@@ -54,6 +58,8 @@ task countAndRandomSample {
         Float final_depth
         String downsample_docker
         Int seed
+        Int disk_size
+        String mem_size
     }
 
     String fastq_downsample_1_name = basename(fastq_file_1, ".fastq") + "_downsample.fastq"
@@ -97,6 +103,9 @@ task countAndRandomSample {
 
     runtime {
         docker: downsample_docker
+        memory: mem_size
+        cpu: "1"
+        disks: "local-disk " + disk_size + " HDD"
     }
 
 }
