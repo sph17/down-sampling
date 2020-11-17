@@ -65,9 +65,9 @@ task countCoverage {
 
     command {
         java -jar /opt/conda/share/picard-2.23.8-0/picard.jar CollectWgsMetrics \
-        -I ~{downsample_sorted_cram} \
-        -O ~{wgsCoverage_name} \
-        -R ~{reference_fasta} \
+        I=~{downsample_sorted_cram} \
+        O=~{wgsCoverage_name} \
+        R=~{reference_fasta} \
         COUNT_UNPAIRED=TRUE
     }
 
