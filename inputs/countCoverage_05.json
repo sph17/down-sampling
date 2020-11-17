@@ -1,0 +1,1 @@
+{"countCoverage.coverage_disk_size":"${200}","countCoverage.coverage_mem_size":"6 GB","countCoverage.downsample_docker":"sphao/downsample:latest","countCoverage.downsample_sorted_cram":"${this.dsSortedCram}","countCoverage.reference_fasta":"${workspace.reference_fasta}"}
