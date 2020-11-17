@@ -65,9 +65,9 @@ task countCoverage {
 
     command {
         picard CollectWgsMetrics \
-        I=${downsample_sorted_cram} \
-        O=${wgsCoverage} \
-        R=${reference_fasta} \
+        I=~{downsample_sorted_cram} \
+        O=~{wgsCoverage} \
+        R=~{reference_fasta} \
         COUNT_UNPAIRED=TRUE
     }
 
