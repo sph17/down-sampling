@@ -60,7 +60,7 @@ task sortIndex {
     
     output {
         File cram_sorted_file = downsample_file_sorted_name
-        File crai_file = cram_sorted_file_name + ".crai"
+        File crai_file = downsample_file_sorted_name + ".crai"
     }
 
     command <<<
