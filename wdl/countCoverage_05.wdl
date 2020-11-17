@@ -41,6 +41,10 @@ workflow countCoverage {
 
     }
 
+    output {
+        File wgsCoverage_metrics = countCoverage.wgsCoverage
+    }
+
 }
 
 task countCoverage {
