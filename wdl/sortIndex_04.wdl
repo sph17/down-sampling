@@ -65,9 +65,9 @@ task sortIndex {
 
     command <<<
 
-        samtools sort -o ${downsample_file_sorted_name} ${cram_downsample_file}
+        samtools sort -o ~{downsample_file_sorted_name} ~{cram_downsample_file}
 
-        samtools index ${downsample_file_sorted_name}
+        samtools index ~{downsample_file_sorted_name}
 
     >>>
 
