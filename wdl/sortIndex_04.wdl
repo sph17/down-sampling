@@ -40,7 +40,7 @@ workflow sortIndex {
     }
 
     output {
-        File cram_sorted_file = sortIndex.cram_sorted_file
+        File sorted_cram = sortIndex.cram_sorted_file
         File crai_file = sortIndex.crai_file
     }
 
