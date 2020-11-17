@@ -10,7 +10,8 @@ workflow sortIndex {
         
         File cram_downsample_file
         File reference_fasta
-        
+        Int sort_disk_size
+        String sort_mem_size
         # Docker
         String downsample_docker
     }
@@ -32,7 +33,9 @@ workflow sortIndex {
     call sortIndex {
         input :
             cram_downsample_file = cram_downsample_file,
-            downsample_docker = downsample_docker
+            downsample_docker = downsample_docker,
+            disk_size = sort_disk_size,
+            mem_size = sort_mem_size
 
     }
 
@@ -44,6 +47,8 @@ task sortIndex {
 
         File cram_downsample_file
         String downsample_docker
+        Int disk_size
+        String mem_size
     }
 
     String downsample_file_sorted_name = basename(cram_downsample_file, ".cram") + "_sorted.cram"
@@ -63,5 +68,8 @@ task sortIndex {
 
     runtime {
         docker: downsample_docker
+        memory: mem_size
+        cpu: "1"
+        disks: "local-disk " + disk_size + " HDD"
     }
 }

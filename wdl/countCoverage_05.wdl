@@ -10,7 +10,8 @@ workflow countCoverage {
         
         File downsample_sorted_cram
         File reference_fasta
-        
+        Int coverage_disk_size
+        String coverage_mem_size        
         # Docker
         String downsample_docker
 
@@ -34,7 +35,9 @@ workflow countCoverage {
         input : 
             downsample_sorted_cram = downsample_sorted_cram,
             reference_fasta = reference_fasta,
-            downsample_docker = downsample_docker
+            downsample_docker = downsample_docker,
+            disk_size = coverage_disk_size,
+            mem_size = coverage_mem_size
 
     }
 
@@ -46,6 +49,8 @@ task countCoverage {
         File downsample_sorted_cram
         File reference_fasta
         String downsample_docker
+        Int disk_size
+        String mem_size
     }
 
     String wgsCoverage_name = basename(downsample_sorted_cram, ".cram") + "_coverage.txt"
@@ -64,5 +69,8 @@ task countCoverage {
 
     runtime {
         docker: downsample_docker
+        memory: mem_size
+        cpu: "1"
+        disks: "local-disk " + disk_size + " HDD"
     }
 }
