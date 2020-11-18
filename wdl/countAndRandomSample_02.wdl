@@ -95,9 +95,9 @@ task countAndRandomSample {
 
             echo "seed: " $seed
 
-            fastq-sample -n ${freads} --seed ~{seed} -o ~{downsample_file_1} ~{fastq_file_1}
+            fastq-sample -n ${freads} --seed ~{seed} -o ~{downsample_file_1_name} ~{fastq_file_1}
 
-            fastq-sample -n ${freads} --seed ~{seed} -o ~{downsample_file_2} ~{fastq_file_2}
+            fastq-sample -n ${freads} --seed ~{seed} -o ~{downsample_file_2_name} ~{fastq_file_2}
 
         else
             echo "Error: counts don't match up!"
