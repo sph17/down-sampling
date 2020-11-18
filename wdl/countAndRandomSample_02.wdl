@@ -78,9 +78,9 @@ task countAndRandomSample {
 
     command <<<
 
-        count1=$(bash /opt/count_fastq.sh ${fastq_file_1})
+        count1=$(bash /opt/count_fastq.sh ~{fastq_file_1})
         echo ${count1}
-        count2=$(bash /opt/count_fastq.sh ${fastq_file_2})
+        count2=$(bash /opt/count_fastq.sh ~{fastq_file_2})
         echo ${count2}
 
         initial=$(echo ~start_depth | awk ' { printf "%0.2f\n", ($1 / 2); } ')
