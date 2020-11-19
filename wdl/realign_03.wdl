@@ -19,8 +19,8 @@ workflow realign {
     }
 
     parameter_meta {
-      downsample_file_: "downsampled .fastq files to be realgined"
-      reference_fasta: ".fasta file with reference used to align bam or cram file"
+      downsample_file_: { help: "downsampled .fastq files to be realgined" }
+      reference_fasta: { localization_optional: true, help: ".fasta file with reference used to align bam or cram file"}
     }
 
     meta {
