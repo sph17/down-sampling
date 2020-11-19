@@ -53,7 +53,7 @@ workflow countCoverage {
             ref_ann = ref_ann,
             ref_bwt = ref_bwt,
             ref_pac = ref_pac,
-            ref_sac = ref_sac,
+            ref_sa = ref_sa,
             ref_fai = ref_fai 
 
     }
