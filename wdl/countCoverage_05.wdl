@@ -38,7 +38,8 @@ workflow countCoverage {
             reference_fasta = reference_fasta,
             downsample_docker = downsample_docker,
             disk_size = coverage_disk_size,
-            mem_size = coverage_mem_size
+            mem_size = coverage_mem_size,
+            reference_dict = reference_dict 
 
     }
 
@@ -56,6 +57,7 @@ task countCoverage {
         String downsample_docker
         Int disk_size
         String mem_size
+        File reference_dict
     }
 
     String wgsCoverage_name = basename(downsample_sorted_cram, ".cram") + "_coverage.txt"
