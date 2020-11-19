@@ -67,10 +67,7 @@ task realign {
     }
 
     command <<<
-        NT=$(nproc)
-
-        bwa mem -C \
-                -t ${NT} \
+        bwa mem -M \
                 ~{reference_fasta} \
                 ~{downsample_file_1} \
                 ~{downsample_file_2} \
