@@ -14,6 +14,7 @@ workflow countCoverage {
         String coverage_mem_size        
         # Docker
         String downsample_docker
+        File reference_dict
 
     }
 
