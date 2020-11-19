@@ -1,0 +1,1 @@
+{"sortIndex.cram_downsample_file":"${this.dsCram}","sortIndex.downsample_docker":"${workspace.docker}","sortIndex.reference_fasta":"${workspace.reference_fasta}","sortIndex.sort_disk_size":"${200}","sortIndex.sort_mem_size":"6 GB"}
