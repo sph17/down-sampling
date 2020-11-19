@@ -18,8 +18,8 @@ workflow countCoverage {
     }
 
     parameter_meta {
-      downsample_sorted_cram: ".cram downsample and sorted file calculate WGS coverage (picard)."
-      reference_fasta: ".fasta file with reference used to align bam or cram file"
+      downsample_sorted_cram: {help: ".cram downsample and sorted file calculate WGS coverage (picard)."}
+      reference_fasta: { localization_optional: true, help: ".fasta file with reference used to align bam or cram file"}
     }
 
     meta {
@@ -58,16 +58,13 @@ task countCoverage {
     }
 
     String wgsCoverage_name = basename(downsample_sorted_cram, ".cram") + "_coverage.txt"
+    String ref_dictionary_name = "Homo_sapiens_assembly38.dict"
 
     output {
         File wgsCoverage = wgsCoverage_name
     }
 
     command {
-        java -Xmx32G -jar /opt/conda/share/picard-2.23.8-0/picard.jar CreateSequenceDictionary \
-        R=Homo_sapiens_assembly38.fasta \
-        O=Homo_sapiens_assembly38.dict
-
         java -Xmx32G -jar /opt/conda/share/picard-2.23.8-0/picard.jar CollectWgsMetrics \
         I=~{downsample_sorted_cram} \
         O=~{wgsCoverage_name} \
