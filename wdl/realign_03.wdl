@@ -17,7 +17,6 @@ workflow realign {
         Int realign_disk_size
         String realign_mem_size
 
-        File ref_alt
         File ref_amb
         File ref_ann
         File ref_bwt
@@ -49,7 +48,6 @@ workflow realign {
             downsample_docker = downsample_docker,
             disk_size = realign_disk_size,
             mem_size = realign_mem_size,
-            ref_alt = ref_alt,
             ref_amb = ref_amb,
             ref_ann = ref_ann,
             ref_bwt = ref_bwt,
@@ -74,7 +72,6 @@ task realign {
         String downsample_docker
         Int disk_size
         String mem_size
-        File ref_alt
         File ref_amb
         File ref_ann
         File ref_bwt
