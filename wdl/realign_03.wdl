@@ -16,6 +16,13 @@ workflow realign {
         String downsample_docker
         Int realign_disk_size
         String realign_mem_size
+
+        File ref_alt
+        File ref_amb
+        File ref_ann
+        File ref_bwt
+        File ref_pac
+        File ref_sa
     }
 
     parameter_meta {
@@ -39,7 +46,14 @@ workflow realign {
             reference_fasta = reference_fasta,
             downsample_docker = downsample_docker,
             disk_size = realign_disk_size,
-            mem_size = realign_mem_size
+            mem_size = realign_mem_size,
+            ref_alt = ref_alt,
+            ref_amb = ref_amb,
+            ref_ann = ref_ann,
+            ref_bwt = ref_bwt,
+            ref_pac = ref_pac,
+            ref_sac = ref_sac
+
     }
 
     output {
@@ -56,6 +70,12 @@ task realign {
         String downsample_docker
         Int disk_size
         String mem_size
+        File ref_alt
+        File ref_amb
+        File ref_ann
+        File ref_bwt
+        File ref_pac
+        File ref_sa
     }
     
     String bam_downsample_name = basename(downsample_file_1, "_1_downsample.fastq") + "_downsample.bam"
