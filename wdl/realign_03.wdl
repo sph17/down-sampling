@@ -23,6 +23,8 @@ workflow realign {
         File ref_bwt
         File ref_pac
         File ref_sa
+        File ref_fai
+        File ref_dict
     }
 
     parameter_meta {
@@ -52,7 +54,9 @@ workflow realign {
             ref_ann = ref_ann,
             ref_bwt = ref_bwt,
             ref_pac = ref_pac,
-            ref_sac = ref_sac
+            ref_sac = ref_sac,
+            ref_fai = ref_fai,
+            ref_dict = ref_dict
 
     }
 
@@ -76,6 +80,8 @@ task realign {
         File ref_bwt
         File ref_pac
         File ref_sa
+        File ref_fai
+        File ref_dict
     }
     
     String bam_downsample_name = basename(downsample_file_1, "_1_downsample.fastq") + "_downsample.bam"

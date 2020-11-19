@@ -15,6 +15,14 @@ workflow countCoverage {
         # Docker
         String downsample_docker
         File reference_dict
+        File ref_alt
+        File ref_amb
+        File ref_ann
+        File ref_bwt
+        File ref_pac
+        File ref_sa
+        File ref_fai
+
 
     }
 
@@ -39,7 +47,14 @@ workflow countCoverage {
             downsample_docker = downsample_docker,
             disk_size = coverage_disk_size,
             mem_size = coverage_mem_size,
-            reference_dict = reference_dict 
+            reference_dict = reference_dict,
+            ref_alt = ref_alt,
+            ref_amb = ref_amb,
+            ref_ann = ref_ann,
+            ref_bwt = ref_bwt,
+            ref_pac = ref_pac,
+            ref_sac = ref_sac,
+            ref_fai = ref_fai 
 
     }
 
@@ -58,6 +73,13 @@ task countCoverage {
         Int disk_size
         String mem_size
         File reference_dict
+        File ref_alt
+        File ref_amb
+        File ref_ann
+        File ref_bwt
+        File ref_pac
+        File ref_sa
+        File ref_fai
     }
 
     String wgsCoverage_name = basename(downsample_sorted_cram, ".cram") + "_coverage.txt"
