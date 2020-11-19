@@ -83,17 +83,19 @@ task countAndRandomSample {
         count2=$(bash /opt/count_fastq.sh ~{fastq_file_2})
         echo ${count2}
 
-        initial=$(echo ~start_depth | awk ' { printf "%0.2f\n", ($1 / 2); } ')
-        final=$(echo ~final_depth | awk ' { printf "%0.2f\n", ($1 / 2); } ')
+        initial=$(echo ~{start_depth} | awk ' { printf "%0.2f\n", ($1 / 2); } ')
+        final=$(echo ~{final_depth} | awk ' { printf "%0.2f\n", ($1 / 2); } ')
+        echo ${initial}
+        echo ${final}
 
         if [ $count1 -eq $count2 ]
           then
 
-            freads=$(bash /opt/calcRD.sh $initial $final $count1)  #half of the total read coverage 30x
+            freads=$(bash /opt/calcRD.sh ${initial} ${final} ${count1})  #half of the total read coverage 30x
 
-            echo "freads: " $freads
+            echo "freads: ${freads}"
 
-            echo "seed: " ~seed
+            echo "seed:  ~{seed}"
 
             fastq-sample -n ${freads} --seed ~{seed} -o ~{fastq_downsample_1_name} ~{fastq_file_1}
 
@@ -101,8 +103,8 @@ task countAndRandomSample {
 
         else
             echo "Error: counts don't match up!"
-            echo $count1
-            echo $count2
+            echo ${count1}
+            echo ${count2}
         fi
     >>>
 
