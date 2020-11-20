@@ -67,8 +67,8 @@ task countAndRandomSample {
         String mem_size
     }
 
-    String fastq_downsample_1_name = basename(fastq_file_1, ".fastq") + "_downsample.fastq"
-    String fastq_downsample_2_name = basename(fastq_file_2, ".fastq") + "_downsample.fastq"
+    String fastq_downsample_1_name = basename(fastq_file_1, ".fastq") + "_downsample"
+    String fastq_downsample_2_name = basename(fastq_file_2, ".fastq") + "_downsample"
 
 
     output {
@@ -95,7 +95,6 @@ task countAndRandomSample {
 
             echo "freads: ${freads}"
 
-            echo "seed:  ~{seed}"
 
             fastq-sample -n ${freads} --seed ~{seed} -o ~{fastq_downsample_1_name} ~{fastq_file_1}
 
