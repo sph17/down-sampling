@@ -72,8 +72,8 @@ task countAndRandomSample {
 
 
     output {
-        File downsample_file_1 = fastq_downsample_1_name
-        File downsample_file_2 = fastq_downsample_2_name
+        File downsample_file_1 = fastq_downsample_1_name + ".fastq"
+        File downsample_file_2 = fastq_downsample_2_name + ".fastq"
     }
 
     command <<<
