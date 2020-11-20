@@ -90,7 +90,10 @@ task realign {
     }
 
     command <<<
+        NT=$(nproc)
+
         bwa mem -M \
+                -t ${NT}\
                 ~{reference_fasta} \
                 ~{downsample_file_1} \
                 ~{downsample_file_2} \
@@ -107,7 +110,7 @@ task realign {
     runtime {
         docker: downsample_docker
         memory: mem_size
-        cpu: "1"
+        cpu: "5"
         disks: "local-disk " + disk_size + " HDD"
     }
 }
