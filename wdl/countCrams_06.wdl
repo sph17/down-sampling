@@ -68,12 +68,12 @@ task CollectCountsCram {
         set -euo pipefail
         export GATK_LOCAL_JAR=${default="/root/gatk.jar" gatk4_jar_override}
 
-        gatk --java-options "-Xmx${command_mem_mb}m" CollectReadCounts \
-            -I ${cram} \
-            --read-index ${crai} \
-            -L ${intervals_exons} \
+        gatk --java-options "-Xmx~{command_mem_mb}m" CollectReadCounts \
+            -I ~{cram} \
+            --read-index ~{crai} \
+            -L ~{intervals_exons} \
             --interval-merging-rule OVERLAPPING_ONLY \
-            --reference ${hg38_reference} \
+            --reference ~{hg38_reference} \
             --format TSV \
             -O temp_file.tsv
             
