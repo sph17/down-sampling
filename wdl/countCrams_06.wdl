@@ -48,7 +48,7 @@ task CollectCountsCram {
         File hg38_reference
         File hg38_reference_fai
         File hg38_reference_dict
-        File? gatk4_jar_override
+        File? gatk4_jar_override 
         String sample_ID
         String gatk_docker
         Int? disk_space_gb
@@ -60,13 +60,13 @@ task CollectCountsCram {
     Boolean use_ssd = false
     Int num_cpu = 1
     Int machine_mem_mb = 600
-    Int command_mem_mb = 500
+    Int command_mem_mb = machine_mem_mb - 100
     String base_filename = basename(cram, ".cram")
     String counts_exons_filename = "${sample_ID}.exons.counts.tsv"
 	
     command <<<
         set -euo pipefail
-        export GATK_LOCAL_JAR=${default="/root/gatk.jar" gatk4_jar_override}
+        export GATK_LOCAL_JAR="/root/gatk.jar"
 
         gatk --java-options "-Xmx~{command_mem_mb}m" CollectReadCounts \
             -I ~{cram} \
