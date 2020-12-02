@@ -94,6 +94,7 @@ task countAndRandomSample {
             freads=$(bash /opt/calcRD.sh ${initial} ${final} ${count1})  #half of the total read coverage 30x
 
             echo "freads: ${freads}"
+            echo "seed: ~{seed}"
 
 
             fastq-sample -n ${freads} --seed ~{seed} -o ~{fastq_downsample_1_name} ~{fastq_file_1}
