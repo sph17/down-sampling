@@ -34,9 +34,7 @@ workflow CC_Crams{
     }
 
     output {
-        Array [String] sample = CollectCountsCram.entity_id
         Array [File] counts_exons = CollectCountsCram.counts_exons
-		Array [String] source_crams = CollectCountsCram.source_cram
     }
 }
 
@@ -75,10 +73,8 @@ task CollectCountsCram {
             --interval-merging-rule OVERLAPPING_ONLY \
             --reference ~{hg38_reference} \
             --format TSV \
-            -O temp_file.tsv
-            
-        rm -rf temp_file.tsv
-        
+            -O ~{counts_exons_filename}
+
     >>>
 
     runtime {
@@ -91,10 +87,7 @@ task CollectCountsCram {
     }
 
     output {
-        String entity_id = sample_ID
         File counts_exons = counts_exons_filename
-		String source_cram = cram
-
     }
 }
 
