@@ -60,7 +60,7 @@ task CollectCountsCram {
     Int machine_mem_mb = 600
     Int command_mem_mb = machine_mem_mb - 100
     String base_filename = basename(cram, ".cram")
-    String counts_exons_filename = "${sample_ID}.exons.counts.tsv"
+    String counts_exons_filename = "${sample_ID}.exons.counts"
 	
     command <<<
         set -euo pipefail
