@@ -56,8 +56,8 @@ task CollectCountsCram {
 
     Boolean use_ssd = false
     Int num_cpu = 1
-    Int machine_mem_mb = 3
-    Int command_mem_mb = machine_mem_gb
+    Int machine_mem_gb = 3
+    Int command_mem_gb = machine_mem_gb
     String base_filename = basename(cram, ".cram")
     String counts_exons_filename = "${sample_ID}.exons.counts.tsv"
 	
@@ -78,7 +78,7 @@ task CollectCountsCram {
 
     runtime {
         docker: "~{gatk_docker}"
-        memory: machine_mem_mb + " GB"
+        memory: machine_mem_gb + " GB"
         disks: "local-disk " + select_first([disk_space_gb, ceil(size(cram, "GB")) + 50]) + if use_ssd then " SSD" else " HDD"
         cpu: num_cpu
     }
