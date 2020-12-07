@@ -60,7 +60,7 @@ task CollectCountsCram {
     Int machine_mem_mb = 600
     Int command_mem_mb = machine_mem_mb - 100
     String base_filename = basename(cram, ".cram")
-    String counts_exons_filename = "${sample_ID}.exons.counts"
+    String counts_exons_filename = "${sample_ID}.exons.counts.tsv"
 	
     command <<<
         set -euo pipefail
@@ -82,7 +82,7 @@ task CollectCountsCram {
         memory: machine_mem_mb + " MB"
         disks: "local-disk " + select_first([disk_space_gb, ceil(size(cram, "GB")) + 50]) + if use_ssd then " SSD" else " HDD"
         cpu: num_cpu
-        preemptible: select_first([preemptible_attempts, 5])
+        preemptible: select_first([preemptible_attempts, 1])
         maxRetries: 3
     }
 
