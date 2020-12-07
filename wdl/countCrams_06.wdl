@@ -50,7 +50,6 @@ task CollectCountsCram {
         String sample_ID
         String gatk_docker
         Int? disk_space_gb
-        Int? preemptible_attempts
     }
 
     # Runtime parameters
@@ -82,8 +81,6 @@ task CollectCountsCram {
         memory: machine_mem_mb + " MB"
         disks: "local-disk " + select_first([disk_space_gb, ceil(size(cram, "GB")) + 50]) + if use_ssd then " SSD" else " HDD"
         cpu: num_cpu
-        preemptible: select_first([preemptible_attempts, 1])
-        maxRetries: 3
     }
 
     output {
