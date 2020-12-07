@@ -85,7 +85,9 @@ task realign {
     }
     
     String bam_downsample_name = basename(downsample_file_1, "_1_downsample.fastq") + "_downsample.bam"
-    String bam_markdup_name = basename(downsample_file_1, "_1_downsample.fastq") + "_downsample_markdup.bam"
+    String bam_readgroup_name = basename(downsample_file_1, "_1_downsample.fastq") + "_downsample_rg.bam"
+    String bam_sorted_name = basename(downsample_file_1, "_1_downsample.fastq") + "_downsample_rg_sorted.bam"
+    String bam_markdup_name = basename(downsample_file_1, "_1_downsample.fastq") + "_downsample_rg_sorted_markdup.bam"
     String markdup_metrics_name = basename(downsample_file_1, "_1_downsample.fastq") + "_downsample_markdup_metrics.txt"
     String cram_downsample_name = basename(downsample_file_1, "_1_downsample.fastq") + "_downsample_markdup.cram"
     
@@ -120,7 +122,7 @@ task realign {
 
         picard AddOrReplaceReadGroups \
             I=~{bam_downsample_name} \
-            O=~{bam_downsample_name} \
+            O=~{bam_readgroup_name} \
             RGID=${ID} \
             RGLB=${LB} \
             RGPL=${PL} \
@@ -128,11 +130,11 @@ task realign {
             RGSM=${SM}
 
         #sort bam for mark dup
-        samtools sort -o ~{bam_downsample_name} ~{bam_downsample_name}
+        samtools sort -o ~{bam_sorted_name} ~{bam_readgroup_name}
 
         #marking duplicates
         picard MarkDuplicates \
-            I=~{bam_downsample_name} \
+            I=~{bam_sorted_name} \
             O=~{bam_markdup_name} \
             M=~{markdup_metrics_name}
 
