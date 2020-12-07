@@ -62,6 +62,7 @@ workflow realign {
 
     output {
         File downsample_cram = realign.cram_downsample_file
+        File markdup_metrics = realign.markdup_metrics_file
     }
 }
 
