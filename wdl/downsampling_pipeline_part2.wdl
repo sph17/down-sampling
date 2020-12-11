@@ -181,7 +181,7 @@ workflow downSampling_02 {
         File sorted_cram = sortIndex.cram_sorted_file
         File crai_file = sortIndex.crai_file
         File wgsCoverage_metrics = countCoverage.wgsCoverage
-        File counts_exons = CollectCountsCram.counts_exons
+        File read_counts = CollectCountsCram.counts_reads
     }
 
 }
@@ -490,7 +490,7 @@ task CollectCountsCram {
     Int machine_mem_gb = 3
     Int command_mem_gb = machine_mem_gb
     String base_filename = basename(cram, ".cram")
-    String counts_exons_filename = "${sample_ID}.exons.counts.tsv"
+    String counts_reads_filename = "${sample_ID}.counts.tsv"
     
     command <<<
         set -euo pipefail
@@ -503,7 +503,7 @@ task CollectCountsCram {
             --interval-merging-rule OVERLAPPING_ONLY \
             --reference ~{hg38_reference} \
             --format TSV \
-            -O ~{counts_exons_filename}
+            -O ~{counts_reads_filename}
 
     >>>
 
@@ -517,7 +517,7 @@ task CollectCountsCram {
     }
 
     output {
-        File counts_exons = counts_exons_filename
+        File counts_reads = counts_reads_filename
     }
 }
 
