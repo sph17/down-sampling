@@ -92,6 +92,7 @@ workflow downSampling_02 {
             downsample_docker = downsample_docker,
             disk_size = realign_disk_size,
             mem_size = realign_mem_size,
+            final_depth = final_depth,
             ref_amb = ref_amb,
             ref_ann = ref_ann,
             ref_bwt = ref_bwt,
@@ -265,9 +266,10 @@ task realign {
         File ref_sa
         File ref_fai
         File ref_dict
+        Float final_depth
     }
     
-    String bam_downsample_name = basename(downsample_file_1, "_1_downsample.fastq") + "_downsample.bam"
+    String bam_downsample_name = basename(downsample_file_1, "_1_downsample_~{final_depth}x.fastq") + "_downsample.bam"
 
     
     output {
@@ -413,7 +415,11 @@ task sortIndex {
 
         samtools sort -o ~{downsample_file_sorted_name} ~{cram_downsample_file}
 
+        echo "File: sorted"
+
         samtools index ~{downsample_file_sorted_name}
+
+        echo "File: indexed"        
 
     >>>
 
