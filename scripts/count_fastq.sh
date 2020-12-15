@@ -14,3 +14,6 @@ lines=$(wc -l $i|cut -d " " -f 1)
 count=$(($lines / 4))
 echo "$count"
 done
+
+
+#simple script to count number of reads in a fastq file
