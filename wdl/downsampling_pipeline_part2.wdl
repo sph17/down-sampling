@@ -428,6 +428,8 @@ task sortIndex {
         memory: mem_size
         cpu: "1"
         disks: "local-disk " + disk_size + " HDD"
+        preemptible: 3
+        maxRetries: 1
     }
 }
 
