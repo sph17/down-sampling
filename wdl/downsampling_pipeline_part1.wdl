@@ -3,7 +3,7 @@ version 1.0
 workflow downSampling_01 {
 
     #################################################################################
-    ####        Required basic arguments                                            #
+    ####        Required basic arguments for downsampling part 1                    #
     #################################################################################
     
     input {
