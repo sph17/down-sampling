@@ -59,7 +59,7 @@ workflow downSampling_01 {
   output {
     File fastq_1 = bamToFq.fastq_file_1
     File fastq_2 = bamToFq.fastq_file_2
-    File read_groups = cramToBam.read_groups_file
+    File? read_groups = cramToBam.read_groups_file
   }
 
 }
