@@ -1,5 +1,7 @@
 version 1.0
 
+import "Structs.wdl"
+
 workflow downSampling_02 {
 
   #################################################################################
@@ -14,18 +16,7 @@ workflow downSampling_02 {
     Float start_depth
     Float final_depth
     Int? seed_override   
-    Int sampling_disk_size
-    String sampling_mem_size
     File original_cram_or_bam_file_read_groups
-        
-    Int realign_disk_size
-    String realign_mem_size
-
-    Int add_rg_disk_size
-    String add_rg_mem_size
-
-    Int mark_dup_disk_size
-    String mark_dup_mem_size
 
     File ref_amb
     File ref_ann
@@ -35,17 +26,20 @@ workflow downSampling_02 {
     File ref_fai
     File ref_dict
 
-    Int sort_disk_size
-    String sort_mem_size
-
-    Int coverage_disk_size
-    String coverage_mem_size  
-
     String sample_ID
     File intervals_exons
 
     File? gatk4_jar_override
-    String gatk_docker  
+    String gatk_docker
+
+    # Runtime configuration overrides
+    RuntimeAttr? runtime_attr_random_sample
+    RuntimeAttr? runtime_attr_realign
+    RuntimeAttr? runtime_attr_add_read_group
+    RuntimeAttr? runtime_attr_mark_duplicates
+    RuntimeAttr? runtime_attr_sort_index
+    RuntimeAttr? runtime_attr_count_coverage
+    RuntimeAttr? runtime_attr_collect_counts
 
   }
 
@@ -75,8 +69,7 @@ workflow downSampling_02 {
       start_depth = start_depth,
       final_depth = final_depth,
       seed = select_first([seed_override, 20937]),
-      disk_size = sampling_disk_size,
-      mem_size = sampling_mem_size
+      runtime_attr_override = runtime_attr_random_sample
     }
 
 
@@ -90,8 +83,7 @@ workflow downSampling_02 {
       downsample_file_2 = countAndRandomSample.downsample_file_2,
       reference_fasta = reference_fasta,
       downsample_docker = downsample_docker,
-      disk_size = realign_disk_size,
-      mem_size = realign_mem_size,
+      runtime_attr_override = runtime_attr_realign,
       final_depth = final_depth,
       ref_amb = ref_amb,
       ref_ann = ref_ann,
@@ -102,21 +94,25 @@ workflow downSampling_02 {
       ref_dict = ref_dict
   }
 
+  #################################################################################
+  ####        Re-adds Read Groups back to realigned bam files                     #
+  #################################################################################
   call addReadGroupAndSort {
     input :
       bam_downsample_file = realign.bam_downsample_file,
       downsample_docker = downsample_docker,
-      disk_size = add_rg_disk_size,
-      mem_size = add_rg_mem_size,
-      original_cram_or_bam_file_read_groups = original_cram_or_bam_file_read_groups
+      original_cram_or_bam_file_read_groups = original_cram_or_bam_file_read_groups,
+      runtime_attr_override = runtime_attr_add_read_group
   }
 
+  #################################################################################
+  ####        Marks duplicates to closely mimick format of sequencers             #
+  #################################################################################
   call markDuplicatesAndToCram {
     input :
-      bam_sorted_rg_file = addRG.bam_sorted_rg_file,
+      bam_sorted_rg_file = addReadGroupAndSort.bam_sorted_rg_file,
       downsample_docker = downsample_docker,
-      disk_size = mark_dup_disk_size,
-      mem_size = mark_dup_mem_size,
+      runtime_attr_override = runtime_attr_mark_duplicates,
       reference_fasta = reference_fasta
   }
 
@@ -126,10 +122,9 @@ workflow downSampling_02 {
   #################################################################################
   call sortIndex {
     input :
-      cram_downsample_file = markDuplicates.cram_downsample_file,
+      cram_downsample_file = markDuplicatesAndToCram.cram_downsample_file,
       downsample_docker = downsample_docker,
-      disk_size = sort_disk_size,
-      mem_size = sort_mem_size
+      runtime_attr_override = runtime_attr_sort_index
   }
 
 
@@ -141,8 +136,7 @@ workflow downSampling_02 {
       downsample_sorted_cram = sortIndex.cram_sorted_file,
       reference_fasta = reference_fasta,
       downsample_docker = downsample_docker,
-      disk_size = coverage_disk_size,
-      mem_size = coverage_mem_size,
+      runtime_attr_override = runtime_attr_count_coverage
       reference_dict = ref_dict,
       ref_amb = ref_amb,
       ref_ann = ref_ann,
@@ -165,7 +159,8 @@ workflow downSampling_02 {
       hg38_reference_fai = ref_fai,
       hg38_reference_dict = ref_dict,
       gatk4_jar_override = gatk4_jar_override,
-      gatk_docker = gatk_docker
+      gatk_docker = gatk_docker,
+      runtime_attr_override = runtime_attr_collect_counts
   }
 
 
@@ -190,6 +185,27 @@ task countAndRandomSample {
     Int seed
     Int disk_size
     String mem_size
+    RuntimeAttr? runtime_attr_override
+  }
+
+  Int num_cpu = 1
+  Int mem_size_gb = 16
+  Int vm_disk_size = 600
+
+  RuntimeAttr default_attr = object {
+    cpu_cores: num_cpu,
+    mem_gb: mem_size_gb, 
+    disk_gb: vm_disk_size,
+    boot_disk_gb: 10,
+    preemptible_tries: 0,
+    max_retries: 1
+  }  
+
+  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+  output {
+    File fastq_file_1 = fastq_file_1_name
+    File fastq_file_2 = fastq_file_2_name
   }
 
   String fastq_downsample_1_name = basename(fastq_file_1, "_1.fastq") + "_downsample_~{final_depth}x"
@@ -237,9 +253,12 @@ task countAndRandomSample {
 
   runtime {
     docker: downsample_docker
-    memory: mem_size
-    cpu: "1"
-    disks: "local-disk " + disk_size + " HDD"
+    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
 
 }
@@ -261,8 +280,24 @@ task realign {
     File ref_fai
     File ref_dict
     Float final_depth
+    RuntimeAttr? runtime_attr_override
   }
-    
+  
+  Int num_cpu = 5
+  Int mem_size_gb = 32
+  Int vm_disk_size = 600
+
+  RuntimeAttr default_attr = object {
+    cpu_cores: num_cpu,
+    mem_gb: mem_size_gb, 
+    disk_gb: vm_disk_size,
+    boot_disk_gb: 10,
+    preemptible_tries: 0,
+    max_retries: 1
+  }  
+
+  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
   String bam_downsample_name = basename(downsample_file_1, "_downsample_~{final_depth}x.1.fastq") + "_downsample.bam"
   
   output {
@@ -287,9 +322,12 @@ task realign {
 
   runtime {
     docker: downsample_docker
-    memory: mem_size
-    cpu: "5"
-    disks: "local-disk " + disk_size + " HDD"
+    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
 }
 
@@ -301,8 +339,24 @@ task addReadGroupAndSort {
     Int disk_size
     String mem_size
     File original_cram_or_bam_file_read_groups
+    RuntimeAttr? runtime_attr_override
   }
-    
+  
+  Int num_cpu = 1
+  Int mem_size_gb = 3
+  Int vm_disk_size = 100
+
+  RuntimeAttr default_attr = object {
+    cpu_cores: num_cpu,
+    mem_gb: mem_size_gb, 
+    disk_gb: vm_disk_size,
+    boot_disk_gb: 10,
+    preemptible_tries: 3,
+    max_retries: 1
+  }  
+
+  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
   String bam_readgroup_name = basename(bam_downsample_file, "_downsample.bam") + "_downsample_rg.bam"
   String bam_sorted_name = basename(bam_downsample_file, "_downsample.bam") + "_downsample_rg_sorted.bam"
 
@@ -341,11 +395,12 @@ task addReadGroupAndSort {
 
   runtime {
     docker: downsample_docker
-    memory: mem_size
-    cpu: "1"
-    disks: "local-disk " + disk_size + " HDD"
-    preemptible: 3
-    maxRetries: 1
+    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
 }
 
@@ -357,8 +412,24 @@ task markDuplicatesAndToCram {
     Int disk_size
     String mem_size
     File reference_fasta
+    RuntimeAttr? runtime_attr_override
   }
-    
+  
+  Int num_cpu = 1
+  Int mem_size_gb = 3
+  Int vm_disk_size = 100
+
+  RuntimeAttr default_attr = object {
+    cpu_cores: num_cpu,
+    mem_gb: mem_size_gb, 
+    disk_gb: vm_disk_size,
+    boot_disk_gb: 10,
+    preemptible_tries: 3,
+    max_retries: 1
+  }
+
+  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
   String bam_markdup_name = basename(bam_sorted_rg_file, "_downsample_rg_sorted.bam") + "_downsample_rg_sorted_markdup.bam"
   String markdup_metrics_name = basename(bam_sorted_rg_file, "_downsample_rg_sorted.bam") + "_downsample_markdup_metrics.txt"
   String cram_downsample_name = basename(bam_sorted_rg_file, "_downsample_rg_sorted.bam") + "_downsample_markdup.cram"
@@ -386,11 +457,12 @@ task markDuplicatesAndToCram {
 
   runtime {
     docker: downsample_docker
-    memory: mem_size
-    cpu: "1"
-    disks: "local-disk " + disk_size + " HDD"
-    preemptible: 3
-    maxRetries: 1
+    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
 }
 
@@ -401,7 +473,23 @@ task sortIndex {
     String downsample_docker
     Int disk_size
     String mem_size
+    RuntimeAttr? runtime_attr_override
   }
+
+  Int num_cpu = 1
+  Int mem_size_gb = 16
+  Int vm_disk_size = 400
+
+  RuntimeAttr default_attr = object {
+    cpu_cores: num_cpu,
+    mem_gb: mem_size_gb, 
+    disk_gb: vm_disk_size,
+    boot_disk_gb: 10,
+    preemptible_tries: 3,
+    max_retries: 1
+  }
+
+  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
   String downsample_file_sorted_name = basename(cram_downsample_file, ".cram") + "_sorted.cram"
     
@@ -428,11 +516,12 @@ task sortIndex {
 
   runtime {
     docker: downsample_docker
-    memory: mem_size
-    cpu: "1"
-    disks: "local-disk " + disk_size + " HDD"
-    preemptible: 3
-    maxRetries: 1
+    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
 }
 
@@ -451,7 +540,23 @@ task countCoverage {
     File ref_pac
     File ref_sa
     File ref_fai
+    RuntimeAttr? runtime_attr_override
   }
+
+  Int num_cpu = 1
+  Int mem_size_gb = 4
+  Int vm_disk_size = 100
+
+  RuntimeAttr default_attr = object {
+    cpu_cores: num_cpu,
+    mem_gb: mem_size_gb, 
+    disk_gb: vm_disk_size,
+    boot_disk_gb: 10,
+    preemptible_tries: 3,
+    max_retries: 1
+  }
+
+  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
   String wgs_coverage_name = basename(downsample_sorted_cram, ".cram") + "_coverage.txt"
   String ref_dictionary_name = "Homo_sapiens_assembly38.dict"
@@ -472,11 +577,12 @@ task countCoverage {
 
   runtime {
     docker: downsample_docker
-    memory: mem_size
-    cpu: "1"
-    disks: "local-disk " + disk_size + " HDD"
-    preemptible: 3
-    maxRetries: 1
+    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
 }
 
@@ -488,18 +594,32 @@ task collectCountsCram {
     File hg38_reference
     File hg38_reference_fai
     File hg38_reference_dict
-    File? gatk4_jar_override 
     String sample_ID
     String gatk_docker
-    Int? disk_space_gb
+    File? gatk4_jar_override 
+    RuntimeAttr? runtime_attr_override
   }
 
-  # Runtime parameters
-
-  Boolean use_ssd = false
+  # Runtime parameters adapted from gatk-sv "CollectCoverage.wdl"
   Int num_cpu = 1
-  Int machine_mem_gb = 3
-  Int command_mem_gb = machine_mem_gb
+  Int mem_size_gb = 12
+  Int vm_disk_size = 50
+
+  RuntimeAttr default_attr = object {
+    cpu_cores: num_cpu,
+    mem_gb: mem_size_gb, 
+    disk_gb: vm_disk_size,
+    boot_disk_gb: 10,
+    preemptible_tries: 3,
+    max_retries: 1
+  }
+
+  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+  Float mem_overhead_gb = 2.0
+  Int command_mem_mb = floor((mem_size_gb - mem_overhead_gb) * 1024)
+
+
   String base_filename = basename(cram, ".cram")
   String counts_reads_filename = "${sample_ID}.counts.tsv"
     
@@ -507,7 +627,7 @@ task collectCountsCram {
     set -euo pipefail
     export GATK_LOCAL_JAR="/root/gatk.jar"
     #Collects read counts and output as a counts.tsv file for downstream analyses
-    gatk --java-options "-Xmx~{command_mem_gb}G" CollectReadCounts \
+    gatk --java-options "-Xmx~{command_mem_mb}m" CollectReadCounts \
       -I ~{cram} \
       --read-index ~{crai} \
       -L ~{intervals_exons} \
@@ -519,12 +639,13 @@ task collectCountsCram {
   >>>
 
   runtime {
-    docker: "~{gatk_docker}"
-    memory: machine_mem_gb + " GB"
-    disks: "local-disk " + select_first([disk_space_gb, ceil(size(cram, "GB")) + 50]) + if use_ssd then " SSD" else " HDD"
-    cpu: num_cpu
-    preemptible: 3
-    maxRetries: 1
+    docker: gatk_docker
+    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
 
   output {
