@@ -15,12 +15,3 @@ numerator=$(echo $frd $count| awk ' { printf "%0.2f\n", ($1 * $2); } ')
 readsToSample=$(echo $numerator $ord| awk ' { printf "%0.2f\n", ($1 / $2); } ')
 
 echo $readsToSample
-
-
-#This calcuates how many reads to random sample
-#bc worked on erisone but not in the docker, so switched to awk above 
-#
-#$(bc <<< "$frd*$count")
-#numerator=$(($count * $frd))
-#echo $numerator
-#readsToSample=$(bc <<< "$numerator / $ord")
