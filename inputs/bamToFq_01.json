@@ -1,1 +1,7 @@
-{"bamToFq.bam_file":"gs://fc-95ba75a4-38aa-4939-8e26-a617fb862a03/c3f7038c-e9c2-459e-9061-a08b0eb7797d/cramToBam/9aee7673-0253-4a16-986d-733775379144/call-cramToBam/HG00405.final.bam","bamToFq.bam_to_fq_disk_size":"${600}","bamToFq.bam_to_fq_mem_size":"64 GB","bamToFq.downsample_docker":"sphao/downsample:latest","bamToFq.reference_fasta":"${workspace.reference_fasta}"}
+{
+    "bamToFq.bam_file": "gs://fc-95ba75a4-38aa-4939-8e26-a617fb862a03/c3f7038c-e9c2-459e-9061-a08b0eb7797d/cramToBam/9aee7673-0253-4a16-986d-733775379144/call-cramToBam/HG00405.final.bam",
+    "bamToFq.bam_to_fq_disk_size": "${600}",
+    "bamToFq.bam_to_fq_mem_size": "64 GB",
+    "bamToFq.downsample_docker": "sphao/downsample:latest",
+    "bamToFq.reference_fasta": "${workspace.reference_fasta}"
+}

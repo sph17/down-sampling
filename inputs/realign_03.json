@@ -1,1 +1,16 @@
-{"realign.ref_sa":"${workspace.ref_sa}","realign.ref_bwt":"${workspace.ref_bwt}","realign.original_cram_file":"${this.bam_or_cram_file}","realign.downsample_docker":"${workspace.docker}","realign.ref_pac":"${workspace.ref_pac}","realign.reference_fasta":"${workspace.reference_fasta}","realign.ref_fai":"${workspace.ref_fai}","realign.downsample_file_1":"${this.downsample_fastq_1}","realign.ref_dict":"${workspace.reference_dict}","realign.realign_mem_size":"32 GB","realign.downsample_file_2":"${this.downsample_fastq_2}","realign.ref_amb":"${workspace.ref_amb}","realign.realign_disk_size":"${600}","realign.ref_ann":"${workspace.ref_ann}"}
+{
+    "realign.ref_sa": "${workspace.ref_sa}",
+    "realign.ref_bwt": "${workspace.ref_bwt}",
+    "realign.original_cram_file": "${this.bam_or_cram_file}",
+    "realign.downsample_docker": "${workspace.docker}",
+    "realign.ref_pac": "${workspace.ref_pac}",
+    "realign.reference_fasta": "${workspace.reference_fasta}",
+    "realign.ref_fai": "${workspace.ref_fai}",
+    "realign.downsample_file_1": "${this.downsample_fastq_1}",
+    "realign.ref_dict": "${workspace.reference_dict}",
+    "realign.realign_mem_size": "32 GB",
+    "realign.downsample_file_2": "${this.downsample_fastq_2}",
+    "realign.ref_amb": "${workspace.ref_amb}",
+    "realign.realign_disk_size": "${600}",
+    "realign.ref_ann": "${workspace.ref_ann}"
+}

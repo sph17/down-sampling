@@ -1,0 +1,9 @@
+{
+    "downSampling_01.bam_or_cram_file": "${this.bam_or_cram_file}",
+    "downSampling_01.bam_to_fq_disk_size": "${600}",
+    "downSampling_01.bam_to_fq_mem_size": "64 GB",
+    "downSampling_01.cram_to_bam_disk_size": "${200}",
+    "downSampling_01.cram_to_bam_mem_size": "15 GB",
+    "downSampling_01.downsample_docker": "gcr.io/neural-tangent-298217/downsample",
+    "downSampling_01.reference_fasta": "${workspace.reference_fasta}"
+}
