@@ -136,7 +136,7 @@ workflow downSampling_02 {
       downsample_sorted_cram = sortIndex.cram_sorted_file,
       reference_fasta = reference_fasta,
       downsample_docker = downsample_docker,
-      runtime_attr_override = runtime_attr_count_coverage
+      runtime_attr_override = runtime_attr_count_coverage,
       reference_dict = ref_dict,
       ref_amb = ref_amb,
       ref_ann = ref_ann,
@@ -203,14 +203,8 @@ task countAndRandomSample {
 
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-  output {
-    File fastq_file_1 = fastq_file_1_name
-    File fastq_file_2 = fastq_file_2_name
-  }
-
   String fastq_downsample_1_name = basename(fastq_file_1, "_1.fastq") + "_downsample_~{final_depth}x"
   String fastq_downsample_2_name = basename(fastq_file_2, "_1.fastq") + "_downsample_~{final_depth}x"
-
 
   output {
     File downsample_file_1 = fastq_downsample_1_name + ".1.fastq"
