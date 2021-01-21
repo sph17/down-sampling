@@ -34,7 +34,8 @@ workflow downSampling_01 {
   #################################################################################
   
   Boolean is_bam_ = basename(bam_or_cram_file, ".bam") + ".bam" == basename(bam_or_cram_file)
-
+  
+  # Convert to BAM if we have a CRAM
   if (!is_bam_) {
     call cramToBam {
       input :
