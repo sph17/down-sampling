@@ -1,27 +1,55 @@
 version 1.0
 
 import "Structs.wdl"
+import "downsampling_pipeline_part1.wdl" as ds1
+import "downsampling_pipeline_part2.wdl" as ds2
 
-workflow downSampling_01 {
+workflow downSampling {
 
   #################################################################################
-  ####        Required basic arguments for downsampling part 1                    #
+  ####        Required basic arguments for downsampling pipeline                  #
   #################################################################################
-    
+  
   input {
-    File bam_or_cram_file
     File reference_fasta
     String downsample_docker
+    File bam_or_cram_file
+
+    File ref_amb
+    File ref_ann
+    File ref_bwt
+    File ref_pac
+    File ref_sa
+    File ref_fai
+    File ref_dict
+
+    String sample_ID
+    File intervals_exons
+
+    #default start depth is 30x
+    Float start_depth = 30
+    Int? seed_override  
+
+    File? gatk4_jar_override
+    String gatk_docker
 
     # Runtime configuration overrides
     RuntimeAttr? runtime_attr_cram_to_bam
-    RuntimeAttr? runtime_attr_bam_to_fastq    
-  }
+    RuntimeAttr? runtime_attr_bam_to_fastq 
+    RuntimeAttr? runtime_attr_random_sample
+    RuntimeAttr? runtime_attr_realign
+    RuntimeAttr? runtime_attr_add_read_group
+    RuntimeAttr? runtime_attr_mark_duplicates
+    RuntimeAttr? runtime_attr_sort_index
+    RuntimeAttr? runtime_attr_count_coverage
+    RuntimeAttr? runtime_attr_collect_counts   
 
-  parameter_meta {
-    bam_or_cram_file: ".bam or .cram file to search for SVs. bams are preferable, crams will be converted to bams."
-    bam_file: ".bam file to search for SVs. bams are preferable, crams will be converted to bams."
-    reference_fasta: ".fasta file with reference used to align bam or cram file"
+    #Execution defaults and overrides
+    Boolean run_downsample_2x = true
+    Boolean run_downsample_4x = true
+    Boolean run_downsample_6x = true
+    Boolean run_downsample_8x = true
+
   }
 
   meta {
@@ -30,160 +58,183 @@ workflow downSampling_01 {
   }
     
   #################################################################################
-  ####        Convert cram to bam                                                 #
+  ####        Calls part 1 to convert cram/bam file to paired fastq               #
   #################################################################################
-  
-  Boolean is_bam_ = basename(bam_or_cram_file, ".bam") + ".bam" == basename(bam_or_cram_file)
 
-  if (!is_bam_) {
-    call cramToBam {
-      input :
-        cram_file = bam_or_cram_file,
-        reference_fasta = reference_fasta,
-        downsample_docker = downsample_docker,
-        runtime_attr_override = runtime_attr_cram_to_bam
-    }
-  }
-
-
-  #################################################################################
-  ####        Convert bam to fq1 & fq2                                            #
-  #################################################################################
-  call bamToFq { 
+  call ds1.downSampling_01 as downSampling_01 {
     input :
-      bam_file = select_first([cramToBam.bam_file, bam_or_cram_file]),
+      bam_or_cram_file = bam_or_cram_file,
+      reference_fasta = reference_fasta,
       downsample_docker = downsample_docker,
-      runtime_attr_override = runtime_attr_bam_to_fastq
+      runtime_attr_cram_to_bam = runtime_attr_cram_to_bam,
+      runtime_attr_bam_to_fastq = runtime_attr_bam_to_fastq 
   }
 
-  output {
-    File fastq_1 = bamToFq.fastq_file_1
-    File fastq_2 = bamToFq.fastq_file_2
-    File? read_groups = cramToBam.read_groups_file
-  }
+  Float final_depth_2x = 2
+  Float final_depth_4x = 4
+  Float final_depth_6x = 6
+  Float final_depth_8x = 8
 
-}
-
-
-task cramToBam {
-    
-  input {
-    File cram_file
-    File reference_fasta
-    String downsample_docker
-    RuntimeAttr? runtime_attr_override
-  }
-
-  File reference_index_file = reference_fasta + ".fai"
-    
-  String bam_file_name = basename(cram_file, ".cram") + ".bam"
-  String read_groups_name = basename(cram_file, ".cram") + "_read_groups.txt"
-
-  Int num_cpu = 4
-  Float mem_size_gb = num_cpu * 4.0
-  
-  Float cram_inflate_ratio = 3.5
-  Float disk_overhead = 20.0
-  Float cram_size = size(cram_file, "GiB")
-  Float bam_size = cram_inflate_ratio * cram_size
-  Float ref_size = size(reference_fasta, "GiB")
-  Float ref_index_size = size(reference_index_file, "GiB")
-  Int vm_disk_size = ceil(bam_size + ref_size + ref_index_size + disk_overhead)
-
-  RuntimeAttr default_attr = object {
-    cpu_cores: num_cpu,
-    mem_gb: mem_size_gb, 
-    disk_gb: vm_disk_size,
-    boot_disk_gb: 10,
-    preemptible_tries: 0,
-    max_retries: 1
-  }
-
-  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-
-  output {
-    File bam_file = bam_file_name
-    File read_groups_file = read_groups_name
-  }
-
-  command {
-    
-    set -euo pipefail
-
-    #extracts read groups for part 2 of pipeline
-    samtools view -H ~{cram_file} > ~{read_groups_name}
-    
-    #converts cram files to bam files
-    samtools view \
-            -b \
-            -h \
-            -@ ~{num_cpu} \
-            -T "~{reference_fasta}" \
-            -o "~{bam_file_name}" \
-            "~{cram_file}"
+  #################################################################################
+  ####        Downsamples samples to 2x, 4x, 6x, and 8x read depths               #
+  #################################################################################
+  if (run_downsample_2x) {
+    call ds2.downSampling_02 as downSampling_02_2x {
+      input :
+        fastq_file_1 = downSampling_01.fastq_1,
+        fastq_file_2 = downSampling_01.fastq_2,
+        downsample_docker = downsample_docker,
+        start_depth = start_depth,
+        final_depth = final_depth_8x,
+        seed_override = seed_override,
+        reference_fasta = reference_fasta,
+        ref_amb = ref_amb,
+        ref_ann = ref_ann,
+        ref_bwt = ref_bwt,
+        ref_pac = ref_pac,
+        ref_sa = ref_sa,
+        ref_fai = ref_fai,
+        ref_dict = ref_dict,
+        original_cram_or_bam_file_read_groups = downSampling_01.read_groups,
+        intervals_exons = intervals_exons,
+        sample_ID = sample_ID,
+        gatk4_jar_override = gatk4_jar_override,
+        gatk_docker = gatk_docker,
+        runtime_attr_random_sample = runtime_attr_random_sample,
+        runtime_attr_realign = runtime_attr_realign,
+        runtime_attr_add_read_group = runtime_attr_add_read_group,
+        runtime_attr_mark_duplicates = runtime_attr_mark_duplicates,
+        runtime_attr_sort_index = runtime_attr_sort_index,
+        runtime_attr_count_coverage = runtime_attr_count_coverage,
+        runtime_attr_collect_counts = runtime_attr_collect_counts
     }
-
-  runtime {
-    docker: downsample_docker
-    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-    memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
-    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
-    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-  }
-}
-
-
-task bamToFq {
-  
-  input {
-    File bam_file
-    String downsample_docker
-    RuntimeAttr? runtime_attr_override
   }
 
-  String fastq_file_1_name = basename(bam_file, ".bam") + "_1.fastq"
-  String fastq_file_2_name = basename(bam_file, ".bam") + "_2.fastq"
+  if (run_downsample_4x) {
+    call ds2.downSampling_02 as downSampling_02_4x {
+      input :
+        fastq_file_1 = downSampling_01.fastq_1,
+        fastq_file_2 = downSampling_01.fastq_2,
+        downsample_docker = downsample_docker,
+        start_depth = start_depth,
+        final_depth = final_depth_4x,
+        seed_override = seed_override,
+        reference_fasta = reference_fasta,
+        ref_amb = ref_amb,
+        ref_ann = ref_ann,
+        ref_bwt = ref_bwt,
+        ref_pac = ref_pac,
+        ref_sa = ref_sa,
+        ref_fai = ref_fai,
+        ref_dict = ref_dict,
+        original_cram_or_bam_file_read_groups = downSampling_01.read_groups,
+        intervals_exons = intervals_exons,
+        sample_ID = sample_ID,
+        gatk4_jar_override = gatk4_jar_override,
+        gatk_docker = gatk_docker,
+        runtime_attr_random_sample = runtime_attr_random_sample,
+        runtime_attr_realign = runtime_attr_realign,
+        runtime_attr_add_read_group = runtime_attr_add_read_group,
+        runtime_attr_mark_duplicates = runtime_attr_mark_duplicates,
+        runtime_attr_sort_index = runtime_attr_sort_index,
+        runtime_attr_count_coverage = runtime_attr_count_coverage,
+        runtime_attr_collect_counts = runtime_attr_collect_counts
+    }
+  }
 
-  Int num_cpu = 5
-  Int mem_size_gb = 14
-  Int vm_disk_size = 300
+  if (run_downsample_6x) {
+    call ds2.downSampling_02 as downSampling_02_6x {
+      input :
+        fastq_file_1 = downSampling_01.fastq_1,
+        fastq_file_2 = downSampling_01.fastq_2,
+        downsample_docker = downsample_docker,
+        start_depth = start_depth,
+        final_depth = final_depth_6x,
+        seed_override = seed_override,
+        reference_fasta = reference_fasta,
+        ref_amb = ref_amb,
+        ref_ann = ref_ann,
+        ref_bwt = ref_bwt,
+        ref_pac = ref_pac,
+        ref_sa = ref_sa,
+        ref_fai = ref_fai,
+        ref_dict = ref_dict,
+        original_cram_or_bam_file_read_groups = downSampling_01.read_groups,
+        intervals_exons = intervals_exons,
+        sample_ID = sample_ID,
+        gatk4_jar_override = gatk4_jar_override,
+        gatk_docker = gatk_docker,
+        runtime_attr_random_sample = runtime_attr_random_sample,
+        runtime_attr_realign = runtime_attr_realign,
+        runtime_attr_add_read_group = runtime_attr_add_read_group,
+        runtime_attr_mark_duplicates = runtime_attr_mark_duplicates,
+        runtime_attr_sort_index = runtime_attr_sort_index,
+        runtime_attr_count_coverage = runtime_attr_count_coverage,
+        runtime_attr_collect_counts = runtime_attr_collect_counts
 
-  RuntimeAttr default_attr = object {
-    cpu_cores: num_cpu,
-    mem_gb: mem_size_gb, 
-    disk_gb: vm_disk_size,
-    boot_disk_gb: 10,
-    preemptible_tries: 0,
-    max_retries: 1
-  }  
+    }
+  }
 
-  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+  if (run_downsample_8x) {
+    call ds2.downSampling_02 as downSampling_02_8x {
+      input :
+        fastq_file_1 = downSampling_01.fastq_1,
+        fastq_file_2 = downSampling_01.fastq_2,
+        downsample_docker = downsample_docker,
+        start_depth = start_depth,
+        final_depth = final_depth_8x,
+        seed_override = seed_override,
+        reference_fasta = reference_fasta,
+        ref_amb = ref_amb,
+        ref_ann = ref_ann,
+        ref_bwt = ref_bwt,
+        ref_pac = ref_pac,
+        ref_sa = ref_sa,
+        ref_fai = ref_fai,
+        ref_dict = ref_dict,
+        original_cram_or_bam_file_read_groups = downSampling_01.read_groups,
+        intervals_exons = intervals_exons,
+        sample_ID = sample_ID,
+        gatk4_jar_override = gatk4_jar_override,
+        gatk_docker = gatk_docker,
+        runtime_attr_random_sample = runtime_attr_random_sample,
+        runtime_attr_realign = runtime_attr_realign,
+        runtime_attr_add_read_group = runtime_attr_add_read_group,
+        runtime_attr_mark_duplicates = runtime_attr_mark_duplicates,
+        runtime_attr_sort_index = runtime_attr_sort_index,
+        runtime_attr_count_coverage = runtime_attr_count_coverage,
+        runtime_attr_collect_counts = runtime_attr_collect_counts
+    }
+  }
 
   output {
-    File fastq_file_1 = fastq_file_1_name
-    File fastq_file_2 = fastq_file_2_name
-  }
+    File fastq_1 = downSampling_01.fastq_1
+    File fastq_2 = downSampling_01.fastq_2
+    File? read_groups = downSampling_01.read_groups
 
-  command <<<
-    set -euo pipefail
+    File? markdup_metrics_2x = downSampling_02_2x.markdup_metrics
+    File? sorted_cram_2x = downSampling_02_2x.sorted_cram
+    File? crai_file_2x = downSampling_02_2x.crai_file
+    File? wgs_coverage_metrics_2x = downSampling_02_2x.wgs_coverage_metrics
+    File? read_counts_2x = downSampling_02_2x.read_counts
 
-    #converts bam file to paired fastq files
-    picard SamToFastq \
-            I=~{bam_file} \
-            FASTQ=~{fastq_file_1_name} \
-            SECOND_END_FASTQ=~{fastq_file_2_name}
-  >>>
+    File? markdup_metrics_4x = downSampling_02_4x.markdup_metrics
+    File? sorted_cram_4x = downSampling_02_4x.sorted_cram
+    File? crai_file_4x = downSampling_02_4x.crai_file
+    File? wgs_coverage_metrics_4x = downSampling_02_4x.wgs_coverage_metrics
+    File? read_counts_4x = downSampling_02_4x.read_counts
 
-  runtime {
-    docker: downsample_docker
-    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-    memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
-    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
-    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+    File? markdup_metrics_6x = downSampling_02_6x.markdup_metrics
+    File? sorted_cram_6x = downSampling_02_6x.sorted_cram
+    File? crai_file_6x = downSampling_02_6x.crai_file
+    File? wgs_coverage_metrics_6x = downSampling_02_6x.wgs_coverage_metrics
+    File? read_counts_6x = downSampling_02_6x.read_counts
+
+    File? markdup_metrics_8x = downSampling_02_8x.markdup_metrics
+    File? sorted_cram_8x = downSampling_02_8x.sorted_cram
+    File? crai_file_8x = downSampling_02_8x.crai_file
+    File? wgs_coverage_metrics_8x = downSampling_02_8x.wgs_coverage_metrics
+    File? read_counts_8x = downSampling_02_8x.read_counts
   }
 
 }
