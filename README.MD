@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 <h2><b>Genome Downsampling Wokflow</b></h2>
+=======
+<h2><b>Genome Downsampling Wokflow<b/></h2>
+>>>>>>> 3c1dfb85e757b1794876701572084bf5bd798c51
 
 The genome downsampling workflow consists of <b>downsampling_part1</b> and <b>downsampling_part2</b> and executed in Downsample.wdl.
 
