@@ -210,7 +210,7 @@ workflow downSampling {
   output {
     File fastq_1 = downSampling_01.fastq_1
     File fastq_2 = downSampling_01.fastq_2
-    File? read_groups = downSampling_01.read_groups
+    File read_groups = downSampling_01.read_groups
 
     File? markdup_metrics_2x = downSampling_02_2x.markdup_metrics
     File? sorted_cram_2x = downSampling_02_2x.sorted_cram
