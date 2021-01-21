@@ -1,6 +1,6 @@
 <h2><b>Genome Downsampling Wokflow</b></h2>
 
-The genome downsampling workflow consists of <b>downsampling_part1</b> and <b>downsampling_part2</b> and executed in Downsample.wdl. The workflow utilizes Samtools, Picard, GATK, and fastq-tools to randomly down-sample to a desired sequencing coverage.
+The genome downsampling workflow consists of <b>downsampling_part1</b> and <b>downsampling_part2</b> and executed in <b>Downsample.wdl</b>. The workflow utilizes Samtools, Picard, GATK, and fastq-tools to randomly down-sample to a desired sequencing coverage.
 
 <b>Downsampling_part1:</b>
 Converts a CRAM/BAM input file into paired-end FASTQ files and extracts read groups from input file.
