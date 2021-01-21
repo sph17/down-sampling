@@ -1,6 +1,6 @@
 <h2><b>Genome Downsampling Wokflow<b/><h2/>
 
-The genome downsampling workflow consists of <b>downsampling_part1</b> and <b>downsampling_part2</b> and executed in <font face="Courier New" size="18px" color="#800000">Downsample.wdl</font>.
+The genome downsampling workflow consists of <b>downsampling_part1</b> and <b>downsampling_part2</b> and executed in <font face="Courier New" size="12px" color="#800000">Downsample.wdl</font>.
 
 <b>Downsampling_part1:</b>
 Converts a CRAM/BAM input file into paired-end FASTQ files and extracts read groups from input file.
