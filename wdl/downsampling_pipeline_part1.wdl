@@ -60,7 +60,7 @@ workflow downSampling_01 {
   output {
     File fastq_1 = bamToFq.fastq_file_1
     File fastq_2 = bamToFq.fastq_file_2
-    File? read_groups = cramToBam.read_groups_file
+    File read_groups = bamToFq.read_groups_file
   }
 
 }
@@ -78,7 +78,6 @@ task cramToBam {
   File reference_index_file = reference_fasta + ".fai"
     
   String bam_file_name = basename(cram_file, ".cram") + ".bam"
-  String read_groups_name = basename(cram_file, ".cram") + "_read_groups.txt"
 
   Int num_cpu = 4
   Float mem_size_gb = num_cpu * 4.0
@@ -104,16 +103,12 @@ task cramToBam {
 
   output {
     File bam_file = bam_file_name
-    File read_groups_file = read_groups_name
   }
 
   command {
     
     set -euo pipefail
 
-    #extracts read groups for part 2 of pipeline
-    samtools view -H ~{cram_file} > ~{read_groups_name}
-    
     #converts cram files to bam files
     samtools view \
             -b \
@@ -146,6 +141,7 @@ task bamToFq {
 
   String fastq_file_1_name = basename(bam_file, ".bam") + "_1.fastq"
   String fastq_file_2_name = basename(bam_file, ".bam") + "_2.fastq"
+  String read_groups_name = basename(bam_file, ".bam") + "_read_groups.txt"
 
   Int num_cpu = 5
   Int mem_size_gb = 14
@@ -165,10 +161,15 @@ task bamToFq {
   output {
     File fastq_file_1 = fastq_file_1_name
     File fastq_file_2 = fastq_file_2_name
+    File read_groups_file = read_groups_name
   }
 
   command <<<
     set -euo pipefail
+
+    #extracts read groups for part 2 of pipeline
+    samtools view -H ~{bam_file} > ~{read_groups_name}
+    
 
     #converts bam file to paired fastq files
     picard SamToFastq \
