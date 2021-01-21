@@ -44,7 +44,7 @@ workflow downSampling_02 {
   }
 
   parameter_meta {
-    original_cram_file: "The original cram file needed for re-adding RG."
+    original_cram_or_bam_file_read_groups: "The original cram file's read group extracted, it is needed to re-add RG."
     reference_fasta: ".fasta file with reference used to align bam or cram file"
     fastq_file_: "paired .fastq file to downsample from."
     start_depth: "float/integer for initial depth of sequencing."
@@ -183,8 +183,6 @@ task countAndRandomSample {
     Float final_depth
     String downsample_docker
     Int seed
-    Int disk_size
-    String mem_size
     RuntimeAttr? runtime_attr_override
   }
 
@@ -204,7 +202,7 @@ task countAndRandomSample {
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
   String fastq_downsample_1_name = basename(fastq_file_1, "_1.fastq") + "_downsample_~{final_depth}x"
-  String fastq_downsample_2_name = basename(fastq_file_2, "_1.fastq") + "_downsample_~{final_depth}x"
+  String fastq_downsample_2_name = basename(fastq_file_2, "_2.fastq") + "_downsample_~{final_depth}x"
 
   output {
     File downsample_file_1 = fastq_downsample_1_name + ".1.fastq"
@@ -264,8 +262,6 @@ task realign {
     File downsample_file_2 
     File reference_fasta
     String downsample_docker
-    Int disk_size
-    String mem_size
     File ref_amb
     File ref_ann
     File ref_bwt
@@ -330,8 +326,6 @@ task addReadGroupAndSort {
   input {
     File bam_downsample_file
     String downsample_docker
-    Int disk_size
-    String mem_size
     File original_cram_or_bam_file_read_groups
     RuntimeAttr? runtime_attr_override
   }
@@ -403,8 +397,6 @@ task markDuplicatesAndToCram {
   input {
     File bam_sorted_rg_file
     String downsample_docker
-    Int disk_size
-    String mem_size
     File reference_fasta
     RuntimeAttr? runtime_attr_override
   }
@@ -465,8 +457,6 @@ task sortIndex {
   input {
     File cram_downsample_file
     String downsample_docker
-    Int disk_size
-    String mem_size
     RuntimeAttr? runtime_attr_override
   }
 
@@ -478,7 +468,7 @@ task sortIndex {
     cpu_cores: num_cpu,
     mem_gb: mem_size_gb, 
     disk_gb: vm_disk_size,
-    boot_disk_gb: 10,
+    boot_disk_gb: 20,
     preemptible_tries: 3,
     max_retries: 1
   }
@@ -525,8 +515,6 @@ task countCoverage {
     File downsample_sorted_cram
     File reference_fasta
     String downsample_docker
-    Int disk_size
-    String mem_size
     File reference_dict
     File ref_amb
     File ref_ann
