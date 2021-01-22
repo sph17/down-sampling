@@ -187,8 +187,8 @@ task countAndRandomSample {
   }
 
   Int num_cpu = 1
-  Int mem_size_gb = 16
-  Int vm_disk_size = 600
+  Int mem_size_gb = 6
+  Int vm_disk_size = 400
 
   RuntimeAttr default_attr = object {
     cpu_cores: num_cpu,
@@ -274,8 +274,8 @@ task realign {
   }
   
   Int num_cpu = 5
-  Int mem_size_gb = 32
-  Int vm_disk_size = 600
+  Int mem_size_gb = 18
+  Int vm_disk_size = 150
 
   RuntimeAttr default_attr = object {
     cpu_cores: num_cpu,
@@ -332,7 +332,7 @@ task addReadGroupAndSort {
   
   Int num_cpu = 1
   Int mem_size_gb = 3
-  Int vm_disk_size = 100
+  Int vm_disk_size = 70
 
   RuntimeAttr default_attr = object {
     cpu_cores: num_cpu,
@@ -403,7 +403,7 @@ task markDuplicatesAndToCram {
   
   Int num_cpu = 1
   Int mem_size_gb = 3
-  Int vm_disk_size = 100
+  Int vm_disk_size = 50
 
   RuntimeAttr default_attr = object {
     cpu_cores: num_cpu,
@@ -461,8 +461,8 @@ task sortIndex {
   }
 
   Int num_cpu = 1
-  Int mem_size_gb = 16
-  Int vm_disk_size = 400
+  Int mem_size_gb = 4
+  Int vm_disk_size = 50
 
   RuntimeAttr default_attr = object {
     cpu_cores: num_cpu,
@@ -527,7 +527,7 @@ task countCoverage {
 
   Int num_cpu = 1
   Int mem_size_gb = 4
-  Int vm_disk_size = 100
+  Int vm_disk_size = 50
 
   RuntimeAttr default_attr = object {
     cpu_cores: num_cpu,
@@ -584,7 +584,7 @@ task collectCountsCram {
 
   # Runtime parameters adapted from gatk-sv "CollectCoverage.wdl"
   Int num_cpu = 1
-  Int mem_size_gb = 12
+  Int mem_size_gb = 6
   Int vm_disk_size = 50
 
   RuntimeAttr default_attr = object {
