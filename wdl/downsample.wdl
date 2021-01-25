@@ -49,6 +49,9 @@ workflow downSampling {
     Boolean run_downsample_4x = true
     Boolean run_downsample_6x = true
     Boolean run_downsample_8x = true
+    Boolean run_downsample_custom = false
+
+    Float? final_depth_custom
 
   }
 
@@ -207,6 +210,38 @@ workflow downSampling {
     }
   }
 
+  if (run_downsample_custom) {
+    call ds2.downSampling_02 as downSampling_02_custom {
+      input :
+        fastq_file_1 = downSampling_01.fastq_1,
+        fastq_file_2 = downSampling_01.fastq_2,
+        downsample_docker = downsample_docker,
+        start_depth = start_depth,
+        final_depth = select_first([final_depth_custom, 1]),
+        seed_override = seed_override,
+        reference_fasta = reference_fasta,
+        ref_amb = ref_amb,
+        ref_ann = ref_ann,
+        ref_bwt = ref_bwt,
+        ref_pac = ref_pac,
+        ref_sa = ref_sa,
+        ref_fai = ref_fai,
+        ref_dict = ref_dict,
+        original_cram_or_bam_file_read_groups = downSampling_01.read_groups,
+        intervals_exons = intervals_exons,
+        sample_ID = sample_ID,
+        gatk4_jar_override = gatk4_jar_override,
+        gatk_docker = gatk_docker,
+        runtime_attr_random_sample = runtime_attr_random_sample,
+        runtime_attr_realign = runtime_attr_realign,
+        runtime_attr_add_read_group = runtime_attr_add_read_group,
+        runtime_attr_mark_duplicates = runtime_attr_mark_duplicates,
+        runtime_attr_sort_index = runtime_attr_sort_index,
+        runtime_attr_count_coverage = runtime_attr_count_coverage,
+        runtime_attr_collect_counts = runtime_attr_collect_counts
+    }
+  }
+
   output {
     File fastq_1 = downSampling_01.fastq_1
     File fastq_2 = downSampling_01.fastq_2
@@ -235,6 +270,12 @@ workflow downSampling {
     File? crai_file_8x = downSampling_02_8x.crai_file
     File? wgs_coverage_metrics_8x = downSampling_02_8x.wgs_coverage_metrics
     File? read_counts_8x = downSampling_02_8x.read_counts
+
+    File? markdup_metrics_custom = downSampling_02_custom.markdup_metrics
+    File? sorted_cram_custom = downSampling_02_custom.sorted_cram
+    File? crai_file_custom = downSampling_02_custom.crai_file
+    File? wgs_coverage_metrics_custom = downSampling_02_custom.wgs_coverage_metrics
+    File? read_counts_custom = downSampling_02_custom.read_counts
   }
 
 }
