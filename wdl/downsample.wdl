@@ -210,14 +210,14 @@ workflow downSampling {
     }
   }
 
-  if (run_downsample_custom) {
+  if (run_downsample_custom && defined(final_depth_custom)) {
     call ds2.downSampling_02 as downSampling_02_custom {
       input :
         fastq_file_1 = downSampling_01.fastq_1,
         fastq_file_2 = downSampling_01.fastq_2,
         downsample_docker = downsample_docker,
         start_depth = start_depth,
-        final_depth = select_first([final_depth_custom, 1]),
+        final_depth = final_depth_custom,
         seed_override = seed_override,
         reference_fasta = reference_fasta,
         ref_amb = ref_amb,
