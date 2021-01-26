@@ -1,5 +1,0 @@
-{
-    "downSampling_01.bam_or_cram_file": "gs://fc-56ac46ea-efc4-4683-b6d5-6d95bed41c5e/CCDG_14151/Project_CCDG_14151_B01_GRM_WGS.cram.2020-02-12/Sample_HG00405/analysis/HG00405.final.cram",
-    "downSampling_01.downsample_docker": "gcr.io/neural-tangent-298217/downsample",
-    "downSampling_01.reference_fasta": "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta"
-}
