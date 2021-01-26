@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 if [ $# -lt 1 ] ; then
     echo ""
     echo "usage: count_fastq.sh [fastq_file1] <fastq_file2> ..|| *.fastq"

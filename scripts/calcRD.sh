@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 err=$'No arguments supplied. The wanted down sampling depths required:\nArg1 = Original Read Depth\nArg2 = Desired Final Read Depth\nArg3 = Original Read Counts'
 
 if [ $# -eq 0 ]
