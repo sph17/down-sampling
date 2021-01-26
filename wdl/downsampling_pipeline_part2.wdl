@@ -41,6 +41,8 @@ workflow downSampling_02 {
     RuntimeAttr? runtime_attr_count_coverage
     RuntimeAttr? runtime_attr_collect_counts
 
+    Boolean run_count_coverage = true
+
   }
 
   parameter_meta {
@@ -131,7 +133,8 @@ workflow downSampling_02 {
   #################################################################################
   ####        Checks for downsamples sequences via picard                         #
   #################################################################################
-  call countCoverage {
+  if (run_count_coverage){
+    call countCoverage {
     input : 
       downsample_sorted_cram = sortIndex.cram_sorted_file,
       reference_fasta = reference_fasta,
@@ -144,7 +147,9 @@ workflow downSampling_02 {
       ref_pac = ref_pac,
       ref_sa = ref_sa,
       ref_fai = ref_fai 
+    }
   }
+  
 
   #################################################################################
   ####        Collect Read Counts with gatk                                       #
@@ -168,7 +173,7 @@ workflow downSampling_02 {
     File markdup_metrics = markDuplicatesAndToCram.markdup_metrics_file
     File sorted_cram = sortIndex.cram_sorted_file
     File crai_file = sortIndex.crai_file
-    File wgs_coverage_metrics = countCoverage.wgs_coverage_file
+    File? wgs_coverage_metrics = countCoverage.wgs_coverage_file
     File read_counts = collectCountsCram.counts_reads
   }
 }

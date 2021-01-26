@@ -79,7 +79,7 @@ task cramToBam {
     
   String bam_file_name = basename(cram_file, ".cram") + ".bam"
 
-  Int num_cpu = 4
+  Int num_cpu = 1
   Float mem_size_gb = num_cpu * 4.0
   
   Float cram_inflate_ratio = 3.5
@@ -95,7 +95,7 @@ task cramToBam {
     mem_gb: mem_size_gb, 
     disk_gb: vm_disk_size,
     boot_disk_gb: 10,
-    preemptible_tries: 0,
+    preemptible_tries: 3,
     max_retries: 1
   }
 
@@ -143,7 +143,7 @@ task bamToFq {
   String fastq_file_2_name = basename(bam_file, ".bam") + "_2.fastq"
   String read_groups_name = basename(bam_file, ".bam") + "_read_groups.txt"
 
-  Int num_cpu = 5
+  Int num_cpu = 1
   Int mem_size_gb = 16
   Int vm_disk_size = 300
 

@@ -64,7 +64,7 @@ workflow downSampling {
   ####        Calls part 1 to convert cram/bam file to paired fastq               #
   #################################################################################
 
-  call ds1.downSampling_01 as downSampling_01 {
+  call ds1.downSampling_01 {
     input :
       bam_or_cram_file = bam_or_cram_file,
       reference_fasta = reference_fasta,
@@ -88,7 +88,7 @@ workflow downSampling {
         fastq_file_2 = downSampling_01.fastq_2,
         downsample_docker = downsample_docker,
         start_depth = start_depth,
-        final_depth = final_depth_8x,
+        final_depth = final_depth_2x,
         seed_override = seed_override,
         reference_fasta = reference_fasta,
         ref_amb = ref_amb,
