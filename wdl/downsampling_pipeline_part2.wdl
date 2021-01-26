@@ -109,6 +109,7 @@ workflow downSampling_02 {
 
   #################################################################################
   ####        Marks duplicates to closely mimick format of sequencers             #
+  ####        and converts to cram                                                #
   #################################################################################
   call markDuplicatesAndToCram {
     input :
@@ -120,7 +121,7 @@ workflow downSampling_02 {
 
 
   #################################################################################
-  ####        Sorts and indexes realigned sequences and convert to crams          #
+  ####        Sorts and indexes realigned sequences                               #
   #################################################################################
   call sortIndex {
     input :
@@ -362,15 +363,15 @@ task addReadGroupAndSort {
     set -euo pipefail
     
     #Re-add read group, necessary for collectCountCrams. This is not best practice. This only adds one RG line, when there are multiples
-    SM=$(samtools view -H ~{original_cram_or_bam_file_read_groups} | grep '^@RG' | head -1 | cut -f7 | sed 's/SM://g')
+    SM=$(grep '^@RG' ~{original_cram_or_bam_file_read_groups} | head -1 | cut -f7 | sed 's/SM://g')
 
-    PU=$(samtools view -H ~{original_cram_or_bam_file_read_groups} | grep '^@RG' | head -1 | cut -f9 | sed 's/PU://g')
+    PU=$(grep '^@RG' ~{original_cram_or_bam_file_read_groups} | head -1 | cut -f9 | sed 's/PU://g')
 
-    ID=$(samtools view -H ~{original_cram_or_bam_file_read_groups} | grep '^@RG' | head -1 | cut -f2 | sed 's/ID://g')
+    ID=$(grep '^@RG' ~{original_cram_or_bam_file_read_groups} | head -1 | cut -f2 | sed 's/ID://g')
 
-    LB=$(samtools view -H ~{original_cram_or_bam_file_read_groups} | grep '^@RG' | head -1 | cut -f5 | sed 's/LB://g')
+    LB=$(grep '^@RG' ~{original_cram_or_bam_file_read_groups} | head -1 | cut -f5 | sed 's/LB://g')
 
-    PL=$(samtools view -H ~{original_cram_or_bam_file_read_groups} | grep '^@RG' | head -1 | cut -f3 | sed 's/PL://g')
+    PL=$(grep '^@RG' ~{original_cram_or_bam_file_read_groups} | head -1 | cut -f3 | sed 's/PL://g')
 
     picard AddOrReplaceReadGroups \
       I=~{bam_downsample_file} \
