@@ -144,7 +144,7 @@ task bamToFq {
   String read_groups_name = basename(bam_file, ".bam") + "_read_groups.txt"
 
   Int num_cpu = 1
-  Int mem_size_gb = 16
+  Int mem_size_gb = 6
   Int vm_disk_size = 300
 
   RuntimeAttr default_attr = object {
@@ -152,7 +152,7 @@ task bamToFq {
     mem_gb: mem_size_gb, 
     disk_gb: vm_disk_size,
     boot_disk_gb: 10,
-    preemptible_tries: 0,
+    preemptible_tries: 3,
     max_retries: 1
   }  
 
