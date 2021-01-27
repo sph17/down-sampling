@@ -11,5 +11,5 @@
 "downSampling.ref_fai":"gs://talkowski-sph-downsampling-references/Homo_sapiens_assembly38.fasta.fai",
 "downSampling.ref_pac":"gs://talkowski-sph-downsampling-references/Homo_sapiens_assembly38.fasta.pac",
 "downSampling.ref_sa":"gs://talkowski-sph-downsampling-references/Homo_sapiens_assembly38.fasta.sa",
-"downSampling_02.sample_ID":"HG00405"
+"downSampling.sample_ID":"HG00405"
 }
