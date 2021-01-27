@@ -218,7 +218,7 @@ workflow downSampling {
         fastq_file_2 = downSampling_01.fastq_2,
         downsample_docker = downsample_docker,
         start_depth = start_depth,
-        final_depth = final_depth_custom,
+        final_depth = select_first([final_depth_custom,]),
         seed_override = seed_override,
         reference_fasta = reference_fasta,
         ref_amb = ref_amb,
