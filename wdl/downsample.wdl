@@ -24,7 +24,7 @@ workflow downSampling {
     File ref_dict
 
     String sample_ID
-    File intervals_exons
+    File intervals_genome
 
     #default start depth is 30x
     Float start_depth = 30
@@ -42,7 +42,8 @@ workflow downSampling {
     RuntimeAttr? runtime_attr_mark_duplicates
     RuntimeAttr? runtime_attr_sort_index
     RuntimeAttr? runtime_attr_count_coverage
-    RuntimeAttr? runtime_attr_collect_counts   
+    RuntimeAttr? runtime_attr_collect_counts
+    RuntimeAttr? runtime_attr_depth_of_coverage   
 
     #Execution defaults and overrides
     Boolean run_downsample_2x = true
@@ -99,7 +100,7 @@ workflow downSampling {
         ref_fai = ref_fai,
         ref_dict = ref_dict,
         original_cram_or_bam_file_read_groups = downSampling_01.read_groups,
-        intervals_exons = intervals_exons,
+        intervals_genome = intervals_genome,
         sample_ID = sample_ID,
         gatk4_jar_override = gatk4_jar_override,
         gatk_docker = gatk_docker,
@@ -131,7 +132,7 @@ workflow downSampling {
         ref_fai = ref_fai,
         ref_dict = ref_dict,
         original_cram_or_bam_file_read_groups = downSampling_01.read_groups,
-        intervals_exons = intervals_exons,
+        intervals_genome = intervals_genome,
         sample_ID = sample_ID,
         gatk4_jar_override = gatk4_jar_override,
         gatk_docker = gatk_docker,
@@ -163,7 +164,7 @@ workflow downSampling {
         ref_fai = ref_fai,
         ref_dict = ref_dict,
         original_cram_or_bam_file_read_groups = downSampling_01.read_groups,
-        intervals_exons = intervals_exons,
+        intervals_genome = intervals_genome,
         sample_ID = sample_ID,
         gatk4_jar_override = gatk4_jar_override,
         gatk_docker = gatk_docker,
@@ -196,7 +197,7 @@ workflow downSampling {
         ref_fai = ref_fai,
         ref_dict = ref_dict,
         original_cram_or_bam_file_read_groups = downSampling_01.read_groups,
-        intervals_exons = intervals_exons,
+        intervals_genome = intervals_genome,
         sample_ID = sample_ID,
         gatk4_jar_override = gatk4_jar_override,
         gatk_docker = gatk_docker,
@@ -228,7 +229,7 @@ workflow downSampling {
         ref_fai = ref_fai,
         ref_dict = ref_dict,
         original_cram_or_bam_file_read_groups = downSampling_01.read_groups,
-        intervals_exons = intervals_exons,
+        intervals_genome = intervals_genome,
         sample_ID = sample_ID,
         gatk4_jar_override = gatk4_jar_override,
         gatk_docker = gatk_docker,
@@ -252,30 +253,35 @@ workflow downSampling {
     File? crai_file_2x = downSampling_02_2x.crai_file
     File? wgs_coverage_metrics_2x = downSampling_02_2x.wgs_coverage_metrics
     File? read_counts_2x = downSampling_02_2x.read_counts
+    File? depth_of_coverage_summary_2x = downSampling_02_2x.depth_of_coverage_summary
 
     File? markdup_metrics_4x = downSampling_02_4x.markdup_metrics
     File? sorted_cram_4x = downSampling_02_4x.sorted_cram
     File? crai_file_4x = downSampling_02_4x.crai_file
     File? wgs_coverage_metrics_4x = downSampling_02_4x.wgs_coverage_metrics
     File? read_counts_4x = downSampling_02_4x.read_counts
+    File? depth_of_coverage_summary_4x = downSampling_02_4x.depth_of_coverage_summary
 
     File? markdup_metrics_6x = downSampling_02_6x.markdup_metrics
     File? sorted_cram_6x = downSampling_02_6x.sorted_cram
     File? crai_file_6x = downSampling_02_6x.crai_file
     File? wgs_coverage_metrics_6x = downSampling_02_6x.wgs_coverage_metrics
     File? read_counts_6x = downSampling_02_6x.read_counts
+    File? depth_of_coverage_summary_6x = downSampling_02_6x.depth_of_coverage_summary
 
     File? markdup_metrics_8x = downSampling_02_8x.markdup_metrics
     File? sorted_cram_8x = downSampling_02_8x.sorted_cram
     File? crai_file_8x = downSampling_02_8x.crai_file
     File? wgs_coverage_metrics_8x = downSampling_02_8x.wgs_coverage_metrics
     File? read_counts_8x = downSampling_02_8x.read_counts
+    File? depth_of_coverage_summary_8x = downSampling_02_8x.depth_of_coverage_summary
 
     File? markdup_metrics_custom = downSampling_02_custom.markdup_metrics
     File? sorted_cram_custom = downSampling_02_custom.sorted_cram
     File? crai_file_custom = downSampling_02_custom.crai_file
     File? wgs_coverage_metrics_custom = downSampling_02_custom.wgs_coverage_metrics
     File? read_counts_custom = downSampling_02_custom.read_counts
+    File? depth_of_coverage_summary_custom = downSampling_02_custom.depth_of_coverage_summary
   }
 
 }
