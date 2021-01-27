@@ -330,7 +330,7 @@ task realign {
     #realigns downsampled paired fq files to sam and then bam with bwa
     NT=$(nproc)
 
-    bwa mem -M \
+    bwa mem -K 100000000 -Y -M \
       -t ${NT}\
       ~{reference_fasta} \
       ~{downsample_file_1} \
@@ -461,7 +461,10 @@ task markDuplicatesAndToCram {
     picard MarkDuplicates \
       I=~{bam_sorted_rg_file} \
       O=~{bam_markdup_name} \
-      M=~{markdup_metrics_name}
+      M=~{markdup_metrics_name} \
+      --VALIDATION_STRINGENCY SILENT \
+      --OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500 \
+      --ASSUME_SORT_ORDER "queryname"
 
     #bam to cram
     samtools view \
