@@ -105,7 +105,7 @@ workflow downSampling_02 {
     input :
       bam_downsample_file = realign.bam_downsample_file,
       downsample_docker = downsample_docker,
-      original_cram_or_bam_file_read_groups = original_cram_or_bam_file_read_groups,
+      reference_fasta = reference_fasta,
       runtime_attr_override = runtime_attr_add_read_group
   }
 
@@ -216,7 +216,7 @@ task countAndRandomSample {
     RuntimeAttr? runtime_attr_override
   }
 
-  Int num_cpu = 1
+  Int num_cpu = 5
   Int mem_size_gb = 6
   Int vm_disk_size = 400
 
@@ -303,8 +303,8 @@ task realign {
     RuntimeAttr? runtime_attr_override
   }
   
-  Int num_cpu = 5
-  Int mem_size_gb = 18
+  Int num_cpu = 16
+  Int mem_size_gb = 30
   Int vm_disk_size = 150
 
   RuntimeAttr default_attr = object {
@@ -355,7 +355,9 @@ task addReadGroupAndSort {
     
   input {
     File bam_downsample_file
+    File uBAM_file
     String downsample_docker
+    File reference_fasta
     File original_cram_or_bam_file_read_groups
     RuntimeAttr? runtime_attr_override
   }
@@ -706,11 +708,11 @@ task calculateDepthOfCoverage {
     set -euo pipefail
     export GATK_LOCAL_JAR="/root/gatk.jar"
     #run on generated downsampled BAMs to produce per locus coverage
-    gatk CollectReadCounts \
+    gatk DepthOfCoverage \
       -I ~{downsample_sorted_cram} \
       -L ~{intervals_genome} \
       -O ~{depth_coverage_name}
-      --reference ~{reference_fasta}
+      -R ~{reference_fasta}
 
 
   >>>
