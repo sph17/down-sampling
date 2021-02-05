@@ -144,7 +144,7 @@ task bamToFq {
   String read_groups_name = basename(bam_file, ".bam") + "_read_groups.txt"
 
   Int num_cpu = 5
-  Int mem_size_gb = 18
+  Int mem_size_gb = 16
   Int vm_disk_size = 300
 
   RuntimeAttr default_attr = object {
@@ -172,7 +172,7 @@ task bamToFq {
     
 
     #converts bam file to paired fastq files
-    picard SamToFastq \
+    java -Xmx16G -jar /opt/conda/share/picard-2.23.8-0/picard.jar SamToFastq \
             I=~{bam_file} \
             FASTQ=~{fastq_file_1_name} \
             SECOND_END_FASTQ=~{fastq_file_2_name}
