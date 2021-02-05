@@ -43,7 +43,7 @@ workflow downSampling_02 {
     RuntimeAttr? runtime_attr_depth_of_coverage
 
     Boolean run_count_coverage = true
-    Boolean run_depth_of_coverage = true
+    Boolean run_depth_of_coverage = false
 
   }
 
@@ -106,6 +106,7 @@ workflow downSampling_02 {
       bam_downsample_file = realign.bam_downsample_file,
       downsample_docker = downsample_docker,
       reference_fasta = reference_fasta,
+      original_cram_or_bam_file_read_groups = original_cram_or_bam_file_read_groups,
       runtime_attr_override = runtime_attr_add_read_group
   }
 
@@ -178,8 +179,10 @@ workflow downSampling_02 {
     call calculateDepthOfCoverage {
     input : 
       downsample_sorted_cram = sortIndex.cram_sorted_file,
+      crai = sortIndex.crai_file,
       reference_fasta = reference_fasta,
       gatk_docker = gatk_docker,
+      sample_ID = sample_ID,
       intervals_genome = intervals_genome,
       runtime_attr_override = runtime_attr_depth_of_coverage,
       reference_dict = ref_dict,
@@ -199,7 +202,8 @@ workflow downSampling_02 {
     File crai_file = sortIndex.crai_file
     File? wgs_coverage_metrics = countCoverage.wgs_coverage_file
     File read_counts = collectCountsCram.counts_reads
-    File? depth_of_coverage_summary = calculateDepthOfCoverage.depth_of_coverage_file
+    File? depth_of_coverage = calculateDepthOfCoverage.depth_of_coverage_file
+
   }
 }
 
@@ -216,7 +220,7 @@ task countAndRandomSample {
     RuntimeAttr? runtime_attr_override
   }
 
-  Int num_cpu = 5
+  Int num_cpu = 1
   Int mem_size_gb = 6
   Int vm_disk_size = 400
 
@@ -304,15 +308,15 @@ task realign {
   }
   
   Int num_cpu = 16
-  Int mem_size_gb = 30
-  Int vm_disk_size = 150
+  Int mem_size_gb = 21
+  Int vm_disk_size = 100
 
   RuntimeAttr default_attr = object {
     cpu_cores: num_cpu,
     mem_gb: mem_size_gb, 
     disk_gb: vm_disk_size,
     boot_disk_gb: 10,
-    preemptible_tries: 0,
+    preemptible_tries: 3,
     max_retries: 1
   }  
 
@@ -355,7 +359,6 @@ task addReadGroupAndSort {
     
   input {
     File bam_downsample_file
-    File uBAM_file
     String downsample_docker
     File reference_fasta
     File original_cram_or_bam_file_read_groups
@@ -464,9 +467,8 @@ task markDuplicatesAndToCram {
       I=~{bam_sorted_rg_file} \
       O=~{bam_markdup_name} \
       M=~{markdup_metrics_name} \
-      --VALIDATION_STRINGENCY SILENT \
-      --OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500 \
-      --ASSUME_SORT_ORDER "queryname"
+      OPTICAL_DUPLICATE_PIXEL_DISTANCE=2500 \
+      ASSUME_SORT_ORDER=queryname
 
     #bam to cram
     samtools view \
@@ -673,6 +675,7 @@ task collectCountsCram {
 task calculateDepthOfCoverage {
   input {
     File downsample_sorted_cram
+    File crai
     File reference_fasta
     String gatk_docker
     File intervals_genome
@@ -683,25 +686,26 @@ task calculateDepthOfCoverage {
     File ref_pac
     File ref_sa
     File ref_fai
+    String sample_ID
     RuntimeAttr? runtime_attr_override
   }
 
-  Int num_cpu = 1
-  Int mem_size_gb = 4
-  Int vm_disk_size = 100
+  Int num_cpu = 16
+  Int mem_size_gb = 30
+  Int vm_disk_size = 400
 
   RuntimeAttr default_attr = object {
     cpu_cores: num_cpu,
     mem_gb: mem_size_gb, 
     disk_gb: vm_disk_size,
     boot_disk_gb: 10,
-    preemptible_tries: 3,
+    preemptible_tries: 0,
     max_retries: 1
   }
 
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-  String depth_coverage_name = basename(downsample_sorted_cram, ".cram") + "_depth_of_coverage_summary.txt"
+  String depth_coverage_name = "${sample_ID}_depth_of_coverage.txt"
 
 
   command <<<
@@ -711,7 +715,7 @@ task calculateDepthOfCoverage {
     gatk DepthOfCoverage \
       -I ~{downsample_sorted_cram} \
       -L ~{intervals_genome} \
-      -O ~{depth_coverage_name}
+      -O ~{depth_coverage_name} \
       -R ~{reference_fasta}
 
 
