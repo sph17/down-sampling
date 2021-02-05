@@ -253,35 +253,35 @@ workflow downSampling {
     File? crai_file_2x = downSampling_02_2x.crai_file
     File? wgs_coverage_metrics_2x = downSampling_02_2x.wgs_coverage_metrics
     File? read_counts_2x = downSampling_02_2x.read_counts
-    File? depth_of_coverage_summary_2x = downSampling_02_2x.depth_of_coverage_summary
+    File? depth_of_coverage_2x = downSampling_02_2x.depth_of_coverage
 
     File? markdup_metrics_4x = downSampling_02_4x.markdup_metrics
     File? sorted_cram_4x = downSampling_02_4x.sorted_cram
     File? crai_file_4x = downSampling_02_4x.crai_file
     File? wgs_coverage_metrics_4x = downSampling_02_4x.wgs_coverage_metrics
     File? read_counts_4x = downSampling_02_4x.read_counts
-    File? depth_of_coverage_summary_4x = downSampling_02_4x.depth_of_coverage_summary
+    File? depth_of_coverage_4x = downSampling_02_4x.depth_of_coverage
 
     File? markdup_metrics_6x = downSampling_02_6x.markdup_metrics
     File? sorted_cram_6x = downSampling_02_6x.sorted_cram
     File? crai_file_6x = downSampling_02_6x.crai_file
     File? wgs_coverage_metrics_6x = downSampling_02_6x.wgs_coverage_metrics
     File? read_counts_6x = downSampling_02_6x.read_counts
-    File? depth_of_coverage_summary_6x = downSampling_02_6x.depth_of_coverage_summary
+    File? depth_of_coverage_6x = downSampling_02_6x.depth_of_coverage
 
     File? markdup_metrics_8x = downSampling_02_8x.markdup_metrics
     File? sorted_cram_8x = downSampling_02_8x.sorted_cram
     File? crai_file_8x = downSampling_02_8x.crai_file
     File? wgs_coverage_metrics_8x = downSampling_02_8x.wgs_coverage_metrics
     File? read_counts_8x = downSampling_02_8x.read_counts
-    File? depth_of_coverage_summary_8x = downSampling_02_8x.depth_of_coverage_summary
+    File? depth_of_coverage_8x = downSampling_02_8x.depth_of_coverage
 
     File? markdup_metrics_custom = downSampling_02_custom.markdup_metrics
     File? sorted_cram_custom = downSampling_02_custom.sorted_cram
     File? crai_file_custom = downSampling_02_custom.crai_file
     File? wgs_coverage_metrics_custom = downSampling_02_custom.wgs_coverage_metrics
     File? read_counts_custom = downSampling_02_custom.read_counts
-    File? depth_of_coverage_summary_custom = downSampling_02_custom.depth_of_coverage_summary
+    File? depth_of_coverage_custom = downSampling_02_custom.depth_of_coverage
   }
 
 }
