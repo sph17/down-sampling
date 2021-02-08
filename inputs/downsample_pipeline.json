@@ -1,0 +1,15 @@
+{
+"downSampling.bam_or_cram_file":"gs://fc-56ac46ea-efc4-4683-b6d5-6d95bed41c5e/CCDG_14151/Project_CCDG_14151_B01_GRM_WGS.cram.2020-02-12/Sample_HG00405/analysis/HG00405.final.cram",
+"downSampling.downsample_docker":"gcr.io/neural-tangent-298217/downsample",
+"downSampling.reference_fasta":"gs://talkowski-sph-downsampling-references/Homo_sapiens_assembly38.fasta",
+"downSampling.gatk_docker":"us.gcr.io/broad-gatk/gatk:4.1.8.1",
+"downSampling.intervals_genome":"gs://talkowski-sph-downsampling-references/preprocessed_intervals.interval_list",
+"downSampling.ref_amb":"gs://talkowski-sph-downsampling-references/Homo_sapiens_assembly38.fasta.amb",
+"downSampling.ref_ann":"gs://talkowski-sph-downsampling-references/Homo_sapiens_assembly38.fasta.ann",
+"downSampling.ref_bwt":"gs://talkowski-sph-downsampling-references/Homo_sapiens_assembly38.fasta.bwt",
+"downSampling.ref_dict":"gs://talkowski-sph-downsampling-references/Homo_sapiens_assembly38.dict",
+"downSampling.ref_fai":"gs://talkowski-sph-downsampling-references/Homo_sapiens_assembly38.fasta.fai",
+"downSampling.ref_pac":"gs://talkowski-sph-downsampling-references/Homo_sapiens_assembly38.fasta.pac",
+"downSampling.ref_sa":"gs://talkowski-sph-downsampling-references/Homo_sapiens_assembly38.fasta.sa",
+"downSampling.sample_ID":"HG00405"
+}

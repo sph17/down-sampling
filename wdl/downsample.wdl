@@ -1,305 +1,290 @@
 version 1.0
 
+import "Structs.wdl"
+import "downsampling_pipeline_part1.wdl" as ds1
+import "downsampling_pipeline_part2.wdl" as ds2
+
 workflow downSampling {
 
-    #################################################################################
-    ####        Required basic arguments                                            #
-    #################################################################################
-    
-    input {
-        
-        File bam_or_cram_file
-        File reference_fasta
-        Float start_depth
-        Float final_depth
-        
-        # Docker
-        String downsample_docker
-
-        Boolean is_bam_ = basename(bam_or_cram_file, ".bam") + ".bam" == basename(bam_or_cram_file)
-    }
-
-    parameter_meta {
-      bam_or_cram_file: ".bam or .cram file to downsample from. bams are preferable, crams will be converted to bams."
-      reference_fasta: ".fasta file with reference used to align bam or cram file"
-    }
-
-    meta {
-        author: "Stephanie Hao"
-        email: "shao@broadinstitute.org"
-    }
-    
-
-    #################################################################################
-    ####        Convert cram to bam                                                 #
-    #################################################################################
-    if (!is_bam_) {
-        call cramToBam {
-            input :
-            cram_file = bam_or_cram_file,
-            reference_fasta = reference_fasta,
-            downsample_docker = downsample_docker
-        }
-    }
-
-    File bam_file = select_first([cramToBam.bam_file, bam_or_cram_file])
-
-
-    #################################################################################
-    ####        Convert bam to fq1 & fq2                                            #
-    #################################################################################
-    call bamToFq { 
-        input :
-            bam_file = bam_file,
-            downsample_docker = downsample_docker
-    }
-
-
-    #################################################################################
-    ####        Calculate reads and random samples appropriate # of reads           #
-    #################################################################################
-    call countAndRandomSample {
-        input : 
-            fastq_file_1 = bamToFq.fastq_file_1,
-            fastq_file_2 = bamToFq.fastq_file_2,
-            downsample_docker = downsample_docker,
-            start_depth = start_depth,
-            final_depth = final_depth
-    }
-
-    #################################################################################
-    ####        bwa realigns the downsampled fastq files to Hg38 genome             #
-    #################################################################################
-    call realign {
-        input :
-            downsample_file_1 = countAndRandomSample.downsample_file_1,
-            downsample_file_2 = countAndRandomSample.downsample_file_2,
-            reference_fasta = reference_fasta,
-            downsample_docker = downsample_docker
-    }
-
-    #################################################################################
-    ####        Sorts and indexes realigned sequences and convert to crams          #
-    #################################################################################
-    call sortIndex {
-        input :
-            cram_downsample_file = realign.cram_downsample_file,
-            downsample_docker = downsample_docker
-
-    }
-
-    #################################################################################
-    ####        Checks for downsamples sequences via picard                         #
-    #################################################################################
-    call countCoverage {
-        input : 
-            downsample_sorted_cram = sortIndex.cram_sorted_file,
-            reference_fasta = reference_fasta,
-            downsample_docker = downsample_docker
-
-    }
-
-}
-
-
-task cramToBam {
-    
-    input {
-        File cram_file
-        File reference_fasta
-        String downsample_docker
-    }
-
-    String bam_file_name = basename(cram_file, ".cram") + ".bam"
-
-    output {
-        File bam_file = bam_file_name
-    }
-
-    command <<<
-        samtools view \
-                -b \
-                -o ~{bam_file_name} \
-                ~{cram_file}
-    >>>
-
-    runtime {
-        docker: downsample_docker
-    }
-}
-
-task bamToFq {
+  #################################################################################
+  ####        Required basic arguments for downsampling pipeline                  #
+  #################################################################################
   
-    input {
-        File bam_file
-        String downsample_docker
+  input {
+    File reference_fasta
+    String downsample_docker
+    File bam_or_cram_file
+
+    File ref_amb
+    File ref_ann
+    File ref_bwt
+    File ref_pac
+    File ref_sa
+    File ref_fai
+    File ref_dict
+
+    String sample_ID
+    File intervals_genome
+
+    #default start depth is 30x
+    Float start_depth = 30
+    Int? seed_override  
+
+    File? gatk4_jar_override
+    String gatk_docker
+
+    # Runtime configuration overrides
+    RuntimeAttr? runtime_attr_cram_to_bam
+    RuntimeAttr? runtime_attr_bam_to_fastq 
+    RuntimeAttr? runtime_attr_random_sample
+    RuntimeAttr? runtime_attr_realign
+    RuntimeAttr? runtime_attr_add_read_group
+    RuntimeAttr? runtime_attr_mark_duplicates
+    RuntimeAttr? runtime_attr_sort_index
+    RuntimeAttr? runtime_attr_count_coverage
+    RuntimeAttr? runtime_attr_collect_counts
+    RuntimeAttr? runtime_attr_depth_of_coverage   
+
+    #Execution defaults and overrides
+    Boolean run_downsample_2x = true
+    Boolean run_downsample_4x = true
+    Boolean run_downsample_6x = true
+    Boolean run_downsample_8x = true
+    Boolean run_downsample_custom = false
+
+    Float? final_depth_custom
+
+  }
+
+  meta {
+    author: "Stephanie Hao"
+    email: "shao@broadinstitute.org"
+  }
+    
+  #################################################################################
+  ####        Calls part 1 to convert cram/bam file to paired fastq               #
+  #################################################################################
+
+  call ds1.downSampling_01 {
+    input :
+      bam_or_cram_file = bam_or_cram_file,
+      reference_fasta = reference_fasta,
+      downsample_docker = downsample_docker,
+      runtime_attr_cram_to_bam = runtime_attr_cram_to_bam,
+      runtime_attr_bam_to_fastq = runtime_attr_bam_to_fastq 
+  }
+
+  Float final_depth_2x = 2
+  Float final_depth_4x = 4
+  Float final_depth_6x = 6
+  Float final_depth_8x = 8
+
+  #################################################################################
+  ####        Downsamples samples to 2x, 4x, 6x, and 8x read depths               #
+  #################################################################################
+  if (run_downsample_2x) {
+    call ds2.downSampling_02 as downSampling_02_2x {
+      input :
+        fastq_file_1 = downSampling_01.fastq_1,
+        fastq_file_2 = downSampling_01.fastq_2,
+        downsample_docker = downsample_docker,
+        start_depth = start_depth,
+        final_depth = final_depth_2x,
+        seed_override = seed_override,
+        reference_fasta = reference_fasta,
+        ref_amb = ref_amb,
+        ref_ann = ref_ann,
+        ref_bwt = ref_bwt,
+        ref_pac = ref_pac,
+        ref_sa = ref_sa,
+        ref_fai = ref_fai,
+        ref_dict = ref_dict,
+        original_cram_or_bam_file_read_groups = downSampling_01.read_groups,
+        intervals_genome = intervals_genome,
+        sample_ID = sample_ID,
+        gatk4_jar_override = gatk4_jar_override,
+        gatk_docker = gatk_docker,
+        runtime_attr_random_sample = runtime_attr_random_sample,
+        runtime_attr_realign = runtime_attr_realign,
+        runtime_attr_add_read_group = runtime_attr_add_read_group,
+        runtime_attr_mark_duplicates = runtime_attr_mark_duplicates,
+        runtime_attr_sort_index = runtime_attr_sort_index,
+        runtime_attr_count_coverage = runtime_attr_count_coverage,
+        runtime_attr_collect_counts = runtime_attr_collect_counts
     }
+  }
 
-    String fastq_file_1_name = basename(bam_file, ".bam") + "_1.fastq"
-    String fastq_file_2_name = basename(bam_file, ".bam") + "_2.fastq"
-
-    output {
-        File fastq_file_1 = fastq_file_1_name
-        File fastq_file_2 = fastq_file_2_name
+  if (run_downsample_4x) {
+    call ds2.downSampling_02 as downSampling_02_4x {
+      input :
+        fastq_file_1 = downSampling_01.fastq_1,
+        fastq_file_2 = downSampling_01.fastq_2,
+        downsample_docker = downsample_docker,
+        start_depth = start_depth,
+        final_depth = final_depth_4x,
+        seed_override = seed_override,
+        reference_fasta = reference_fasta,
+        ref_amb = ref_amb,
+        ref_ann = ref_ann,
+        ref_bwt = ref_bwt,
+        ref_pac = ref_pac,
+        ref_sa = ref_sa,
+        ref_fai = ref_fai,
+        ref_dict = ref_dict,
+        original_cram_or_bam_file_read_groups = downSampling_01.read_groups,
+        intervals_genome = intervals_genome,
+        sample_ID = sample_ID,
+        gatk4_jar_override = gatk4_jar_override,
+        gatk_docker = gatk_docker,
+        runtime_attr_random_sample = runtime_attr_random_sample,
+        runtime_attr_realign = runtime_attr_realign,
+        runtime_attr_add_read_group = runtime_attr_add_read_group,
+        runtime_attr_mark_duplicates = runtime_attr_mark_duplicates,
+        runtime_attr_sort_index = runtime_attr_sort_index,
+        runtime_attr_count_coverage = runtime_attr_count_coverage,
+        runtime_attr_collect_counts = runtime_attr_collect_counts
     }
+  }
 
-    command <<<
-        picard SamToFastq \
-                I=~{bam_file} \
-                FASTQ=~{fastq_file_1_name} \
-                SECOND_END_FASTQ=~{fastq_file_2_name}
-    >>>
+  if (run_downsample_6x) {
+    call ds2.downSampling_02 as downSampling_02_6x {
+      input :
+        fastq_file_1 = downSampling_01.fastq_1,
+        fastq_file_2 = downSampling_01.fastq_2,
+        downsample_docker = downsample_docker,
+        start_depth = start_depth,
+        final_depth = final_depth_6x,
+        seed_override = seed_override,
+        reference_fasta = reference_fasta,
+        ref_amb = ref_amb,
+        ref_ann = ref_ann,
+        ref_bwt = ref_bwt,
+        ref_pac = ref_pac,
+        ref_sa = ref_sa,
+        ref_fai = ref_fai,
+        ref_dict = ref_dict,
+        original_cram_or_bam_file_read_groups = downSampling_01.read_groups,
+        intervals_genome = intervals_genome,
+        sample_ID = sample_ID,
+        gatk4_jar_override = gatk4_jar_override,
+        gatk_docker = gatk_docker,
+        runtime_attr_random_sample = runtime_attr_random_sample,
+        runtime_attr_realign = runtime_attr_realign,
+        runtime_attr_add_read_group = runtime_attr_add_read_group,
+        runtime_attr_mark_duplicates = runtime_attr_mark_duplicates,
+        runtime_attr_sort_index = runtime_attr_sort_index,
+        runtime_attr_count_coverage = runtime_attr_count_coverage,
+        runtime_attr_collect_counts = runtime_attr_collect_counts
 
-    runtime {
-        docker: downsample_docker
     }
+  }
+
+  if (run_downsample_8x) {
+    call ds2.downSampling_02 as downSampling_02_8x {
+      input :
+        fastq_file_1 = downSampling_01.fastq_1,
+        fastq_file_2 = downSampling_01.fastq_2,
+        downsample_docker = downsample_docker,
+        start_depth = start_depth,
+        final_depth = final_depth_8x,
+        seed_override = seed_override,
+        reference_fasta = reference_fasta,
+        ref_amb = ref_amb,
+        ref_ann = ref_ann,
+        ref_bwt = ref_bwt,
+        ref_pac = ref_pac,
+        ref_sa = ref_sa,
+        ref_fai = ref_fai,
+        ref_dict = ref_dict,
+        original_cram_or_bam_file_read_groups = downSampling_01.read_groups,
+        intervals_genome = intervals_genome,
+        sample_ID = sample_ID,
+        gatk4_jar_override = gatk4_jar_override,
+        gatk_docker = gatk_docker,
+        runtime_attr_random_sample = runtime_attr_random_sample,
+        runtime_attr_realign = runtime_attr_realign,
+        runtime_attr_add_read_group = runtime_attr_add_read_group,
+        runtime_attr_mark_duplicates = runtime_attr_mark_duplicates,
+        runtime_attr_sort_index = runtime_attr_sort_index,
+        runtime_attr_count_coverage = runtime_attr_count_coverage,
+        runtime_attr_collect_counts = runtime_attr_collect_counts
+    }
+  }
+
+  if (run_downsample_custom && defined(final_depth_custom)) {
+    call ds2.downSampling_02 as downSampling_02_custom {
+      input :
+        fastq_file_1 = downSampling_01.fastq_1,
+        fastq_file_2 = downSampling_01.fastq_2,
+        downsample_docker = downsample_docker,
+        start_depth = start_depth,
+        final_depth = select_first([final_depth_custom,]),
+        seed_override = seed_override,
+        reference_fasta = reference_fasta,
+        ref_amb = ref_amb,
+        ref_ann = ref_ann,
+        ref_bwt = ref_bwt,
+        ref_pac = ref_pac,
+        ref_sa = ref_sa,
+        ref_fai = ref_fai,
+        ref_dict = ref_dict,
+        original_cram_or_bam_file_read_groups = downSampling_01.read_groups,
+        intervals_genome = intervals_genome,
+        sample_ID = sample_ID,
+        gatk4_jar_override = gatk4_jar_override,
+        gatk_docker = gatk_docker,
+        runtime_attr_random_sample = runtime_attr_random_sample,
+        runtime_attr_realign = runtime_attr_realign,
+        runtime_attr_add_read_group = runtime_attr_add_read_group,
+        runtime_attr_mark_duplicates = runtime_attr_mark_duplicates,
+        runtime_attr_sort_index = runtime_attr_sort_index,
+        runtime_attr_count_coverage = runtime_attr_count_coverage,
+        runtime_attr_collect_counts = runtime_attr_collect_counts
+    }
+  }
+
+  output {
+    File fastq_1 = downSampling_01.fastq_1
+    File fastq_2 = downSampling_01.fastq_2
+    File read_groups = downSampling_01.read_groups
+
+    File? markdup_metrics_2x = downSampling_02_2x.markdup_metrics
+    File? sorted_cram_2x = downSampling_02_2x.sorted_cram
+    File? crai_file_2x = downSampling_02_2x.crai_file
+    File? wgs_coverage_metrics_2x = downSampling_02_2x.wgs_coverage_metrics
+    File? read_counts_2x = downSampling_02_2x.read_counts
+    File? depth_of_coverage_2x = downSampling_02_2x.depth_of_coverage
+
+    File? markdup_metrics_4x = downSampling_02_4x.markdup_metrics
+    File? sorted_cram_4x = downSampling_02_4x.sorted_cram
+    File? crai_file_4x = downSampling_02_4x.crai_file
+    File? wgs_coverage_metrics_4x = downSampling_02_4x.wgs_coverage_metrics
+    File? read_counts_4x = downSampling_02_4x.read_counts
+    File? depth_of_coverage_4x = downSampling_02_4x.depth_of_coverage
+
+    File? markdup_metrics_6x = downSampling_02_6x.markdup_metrics
+    File? sorted_cram_6x = downSampling_02_6x.sorted_cram
+    File? crai_file_6x = downSampling_02_6x.crai_file
+    File? wgs_coverage_metrics_6x = downSampling_02_6x.wgs_coverage_metrics
+    File? read_counts_6x = downSampling_02_6x.read_counts
+    File? depth_of_coverage_6x = downSampling_02_6x.depth_of_coverage
+
+    File? markdup_metrics_8x = downSampling_02_8x.markdup_metrics
+    File? sorted_cram_8x = downSampling_02_8x.sorted_cram
+    File? crai_file_8x = downSampling_02_8x.crai_file
+    File? wgs_coverage_metrics_8x = downSampling_02_8x.wgs_coverage_metrics
+    File? read_counts_8x = downSampling_02_8x.read_counts
+    File? depth_of_coverage_8x = downSampling_02_8x.depth_of_coverage
+
+    File? markdup_metrics_custom = downSampling_02_custom.markdup_metrics
+    File? sorted_cram_custom = downSampling_02_custom.sorted_cram
+    File? crai_file_custom = downSampling_02_custom.crai_file
+    File? wgs_coverage_metrics_custom = downSampling_02_custom.wgs_coverage_metrics
+    File? read_counts_custom = downSampling_02_custom.read_counts
+    File? depth_of_coverage_custom = downSampling_02_custom.depth_of_coverage
+  }
+
 }
 
-task countAndRandomSample {
-    
-    input {
-        File fastq_file_1
-        File fastq_file_2
-        Float start_depth
-        Float final_depth
-        String downsample_docker
-    }
 
-    String fastq_downsample_1_name = basename(fastq_file_1, ".fastq") + "_downsample.fastq"
-    String fastq_downsample_2_name = basename(fastq_file_2, ".fastq") + "_downsample.fastq"
 
-    output {
-        File downsample_file_1 = fastq_downsample_1_name
-        File downsample_file_2 = fastq_downsample_2_name
-    }
-
-    command <<<
-
-        count1=$(bash /opt/count_fastq.sh ${fastq_file_1})
-        echo ${count1}
-        count2=$(bash /opt/count_fastq.sh ${fastq_file_2})
-        echo ${count2}
-
-        initial=$(echo $start_depth | awk ' { printf "%0.2f\n", ($1 / 2); } ')
-        final=$(echo $final_depth | awk ' { printf "%0.2f\n", ($1 / 2); } ')
-
-        if [ $count1 -eq $count2 ]
-          then
-
-            freads=$(bash /opt/calcRD.sh $initial $final $count1)  #half of the total read coverage 30x
-
-            echo "freads: " $freads
-
-            seed=$RANDOM
-            echo "seed: " $seed
-
-            fastq-sample -n ${freads} --seed ${seed} -o ${downsample_file_1} ${fastq_file_1}
-
-            fastq-sample -n ${freads} --seed ${seed} -o ${downsample_file_2} ${fastq_file_2}
-
-        else
-            echo "Error: counts don't match up!"
-            echo $count1
-            echo $count2
-        fi
-    >>>
-
-    runtime {
-        docker: downsample_docker
-    }
-
-}
-
-task realign {
-    
-    input {
-        File downsample_file_1 
-        File downsample_file_2 
-        File reference_fasta
-        String downsample_docker
-    }
-    String bam_downsample_name = basename(downsample_file_1, "_1_downsample.fastq") + "_downsample.bam"
-    String cram_downsample_name = basename(downsample_file_1, "_1_downsample.fastq") + "_downsample.cram"
-
-    
-    output {
-        File cram_downsample_file = cram_downsample_name
-    }
-
-    command <<<
-        NT=$(nproc)
-
-        bwa mem -C \
-                -t ${NT} \
-                ${reference_fasta} \
-                ${downsample_file_1} \
-                ${downsample_file_2} \
-                | samtools view \
-                -bS - > ${bam_downsample_name}
-
-        samtools view \
-                -C \
-                -T ${reference_fasta} \
-                ${bam_downsample_name} \
-                > ${cram_downsample_name}
-    >>>
-
-    runtime {
-        docker: downsample_docker
-    }
-}
-
-task sortIndex {
-    
-    input {
-
-        File cram_downsample_file
-        String downsample_docker
-    }
-
-    String downsample_file_sorted_name = basename(cram_downsample_file, ".cram") + "_sorted.cram"
-    
-    output {
-        File cram_sorted_file = downsample_file_sorted_name
-        File crai_file = cram_sorted_file + ".crai"
-    }
-
-    command <<<
-
-        samtools sort -o ${downsample_file_sorted_name} ${cram_downsample_file}
-
-        samtools index ${downsample_file_sorted_name}
-
-    >>>
-
-    runtime {
-        docker: downsample_docker
-    }
-}
-
-task countCoverage {
-    
-    input {
-        File downsample_sorted_cram
-        File reference_fasta
-        String downsample_docker
-    }
-
-    String wgsCoverage_name = basename(downsample_sorted_cram, ".cram") + "_coverage.txt"
-
-    output {
-        File wgsCoverage = wgsCoverage_name
-    }
-
-    command <<<
-        picard CollectWgsMetrics \
-        I=${downsample_sorted_cram} \
-        O=${wgsCoverage} \
-        R=${reference_fasta} \
-        COUNT_UNPAIRED=TRUE
-    >>>
-
-    runtime {
-        docker: downsample_docker
-    }
-}
