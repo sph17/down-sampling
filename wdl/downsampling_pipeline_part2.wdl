@@ -394,7 +394,7 @@ task addReadGroupAndSort {
     #Re-add read group, necessary for collectCountCrams. This is not best practice. This only adds one RG line, when there are multiples
     SM=$(grep '^@RG' ~{original_cram_or_bam_file_read_groups} | head -1 | cut -f7 | sed 's/SM://g')
 
-    PU=$(grep '^@RG' ~{original_cram_or_bam_file_read_groups} | head -1 | cut -f9 | sed 's/PU://g')
+    PU=$(grep '^@RG' ~{original_cram_or_bam_file_read_groups} | head -1 | cut -f2 | awk -F'_'  '{print $3"_"$4}')
 
     ID=$(grep '^@RG' ~{original_cram_or_bam_file_read_groups} | head -1 | cut -f2 | sed 's/ID://g')
 
