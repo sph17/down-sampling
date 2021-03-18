@@ -641,6 +641,7 @@ task collectCountsCram {
 
   String base_filename = basename(cram, ".cram")
   String counts_reads_filename = "${sample_ID}.counts.tsv"
+  String counts_reads_filename_zip = "${counts_reads_filename}" + ".gz"
     
   command <<<
     set -euo pipefail
@@ -655,6 +656,8 @@ task collectCountsCram {
       --format TSV \
       -O ~{counts_reads_filename}
 
+    gzip -c ~{counts_reads_filename} > ~{counts_reads_filename_zip}
+
   >>>
 
   runtime {
@@ -668,7 +671,7 @@ task collectCountsCram {
   }
 
   output {
-    File counts_reads = counts_reads_filename
+    File counts_reads = counts_reads_filename_zip
   }
 }
 
