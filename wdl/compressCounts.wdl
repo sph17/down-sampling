@@ -108,12 +108,12 @@ task compressCounts {
   Float mem_overhead_gb = 2.0
   Int command_mem_mb = floor((mem_size_gb - mem_overhead_gb) * 1024)
 
-  String counts_reads_filename_zip = "${sample_ID}.counts.tsv.gz"
+  String count_reads_filename_zip = "${sample_ID}.counts.tsv.gz"
     
   command <<<
     set -euo pipefail
 
-    gzip -c ~{counts_reads_filename} > ~{counts_reads_filename_zip}
+    gzip -c ~{count_reads_filename} > ~{count_reads_filename_zip}
 
   >>>
 
@@ -128,7 +128,7 @@ task compressCounts {
   }
 
   output {
-    File counts_reads = counts_reads_filename_zip
+    File counts_reads = count_reads_filename_zip
   }
 }
 
