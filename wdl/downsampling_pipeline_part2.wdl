@@ -130,7 +130,8 @@ workflow downSampling_02 {
     input :
       cram_downsample_file = markDuplicatesAndToCram.cram_downsample_file,
       downsample_docker = downsample_docker,
-      runtime_attr_override = runtime_attr_sort_index
+      runtime_attr_override = runtime_attr_sort_index,
+      reference_fasta = reference_fasta
   }
 
 
@@ -494,6 +495,7 @@ task sortIndex {
   input {
     File cram_downsample_file
     String downsample_docker
+    File reference_fasta
     RuntimeAttr? runtime_attr_override
   }
 
@@ -524,10 +526,13 @@ task sortIndex {
     set -euo pipefail
       
     #sorts and indexes the downsampled, markduped cram file
+    echo "Sort Starting..."
 
-    samtools sort -o ~{downsample_file_sorted_name} ~{cram_downsample_file}
+    samtools sort --reference ~{reference_fasta} -o ~{downsample_file_sorted_name} ~{cram_downsample_file}
 
     echo "File: sorted"
+
+    echo "Index Starting..."
 
     samtools index ~{downsample_file_sorted_name}
 
