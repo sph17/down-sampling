@@ -10,7 +10,6 @@ workflow collectOriginalReadCounts {
     
   input {
     File reference_fasta
-    String downsample_docker
     File cram_or_bam_file
     File ref_fai
     File ref_dict
