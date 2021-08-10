@@ -45,6 +45,7 @@ workflow collectOriginalReadCounts {
   if (run_count_coverage){
     call collectCountsCram {
     input : 
+      intervals_genome = intervals_genome,
       cram = cram_or_bam_file,
       crai = cram_or_bam_file + ".crai",
       sample_ID = sample_ID,
