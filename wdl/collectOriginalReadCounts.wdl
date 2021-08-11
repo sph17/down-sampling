@@ -19,6 +19,7 @@ workflow collectOriginalReadCounts {
 
     File? gatk4_jar_override
     String gatk_docker
+    File? crai
 
     # Runtime configuration overrides
     RuntimeAttr? runtime_attr_collect_counts
@@ -47,7 +48,7 @@ workflow collectOriginalReadCounts {
     input : 
       intervals_genome = intervals_genome,
       cram = cram_or_bam_file,
-      crai = cram_or_bam_file + ".crai",
+      crai = select_first([crai, cram_or_bam_file + ".crai"]),
       sample_ID = sample_ID,
       hg38_reference = reference_fasta,
       hg38_reference_fai = ref_fai,
