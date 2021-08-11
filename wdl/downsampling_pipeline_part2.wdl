@@ -130,7 +130,8 @@ workflow downSampling_02 {
     input :
       cram_downsample_file = markDuplicatesAndToCram.cram_downsample_file,
       downsample_docker = downsample_docker,
-      runtime_attr_override = runtime_attr_sort_index
+      runtime_attr_override = runtime_attr_sort_index,
+      reference_fasta = reference_fasta
   }
 
 
@@ -394,7 +395,7 @@ task addReadGroupAndSort {
     #Re-add read group, necessary for collectCountCrams. This is not best practice. This only adds one RG line, when there are multiples
     SM=$(grep '^@RG' ~{original_cram_or_bam_file_read_groups} | head -1 | cut -f7 | sed 's/SM://g')
 
-    PU=$(grep '^@RG' ~{original_cram_or_bam_file_read_groups} | head -1 | cut -f9 | sed 's/PU://g')
+    PU=$(grep '^@RG' ~{original_cram_or_bam_file_read_groups} | head -1 | cut -f2 | awk -F'_'  '{print $3"_"$4}')
 
     ID=$(grep '^@RG' ~{original_cram_or_bam_file_read_groups} | head -1 | cut -f2 | sed 's/ID://g')
 
@@ -494,6 +495,7 @@ task sortIndex {
   input {
     File cram_downsample_file
     String downsample_docker
+    File reference_fasta
     RuntimeAttr? runtime_attr_override
   }
 
@@ -524,10 +526,13 @@ task sortIndex {
     set -euo pipefail
       
     #sorts and indexes the downsampled, markduped cram file
+    echo "Sort Starting..."
 
-    samtools sort -o ~{downsample_file_sorted_name} ~{cram_downsample_file}
+    samtools sort --reference ~{reference_fasta} -o ~{downsample_file_sorted_name} ~{cram_downsample_file}
 
     echo "File: sorted"
+
+    echo "Index Starting..."
 
     samtools index ~{downsample_file_sorted_name}
 
@@ -641,6 +646,7 @@ task collectCountsCram {
 
   String base_filename = basename(cram, ".cram")
   String counts_reads_filename = "${sample_ID}.counts.tsv"
+  String counts_reads_filename_zip = "${counts_reads_filename}" + ".gz"
     
   command <<<
     set -euo pipefail
@@ -655,6 +661,8 @@ task collectCountsCram {
       --format TSV \
       -O ~{counts_reads_filename}
 
+    gzip -c ~{counts_reads_filename} > ~{counts_reads_filename_zip}
+
   >>>
 
   runtime {
@@ -668,7 +676,7 @@ task collectCountsCram {
   }
 
   output {
-    File counts_reads = counts_reads_filename
+    File counts_reads = counts_reads_filename_zip
   }
 }
 
